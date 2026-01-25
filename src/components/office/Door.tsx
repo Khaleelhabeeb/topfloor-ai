@@ -74,7 +74,6 @@ export function Door({
       <group rotation={[0, isOpen ? -Math.PI/2 : 0, 0]}>
         <mesh 
           position={[isOpen ? 0 : 0, doorHeight/2, 0]} 
-          castShadow 
           receiveShadow
           onPointerEnter={() => setIsHovered(true)}
           onPointerLeave={() => setIsHovered(false)}
@@ -89,7 +88,7 @@ export function Door({
         </mesh>
         
         {/* Door Handle */}
-        <mesh position={[doorWidth/2 - 0.15, doorHeight/2 - 0.2, doorThickness/2 + 0.02]} castShadow>
+        <mesh position={[doorWidth/2 - 0.15, doorHeight/2 - 0.2, doorThickness/2 + 0.02]}>
           <sphereGeometry args={[0.04, 8, 8]} />
           <meshStandardMaterial color="#FFD700" metalness={0.8} roughness={0.2} />
         </mesh>
