@@ -1,6 +1,13 @@
 import { Text } from '@react-three/drei';
+import { Door } from './Door';
+import * as THREE from 'three';
 
-export function Hallway() {
+interface HallwayProps {
+  onDoorInteract?: (doorId: string) => void;
+  doorStates?: Map<string, boolean>;
+  playerPosition?: THREE.Vector3;
+}
+export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayProps) {
   const hallwayLength = 30;
   const hallwayWidth = 4;
   const hallwayHeight = 3.5;
@@ -13,17 +20,41 @@ export function Hallway() {
         <meshStandardMaterial color="#4a4a4a" />
       </mesh>
 
-      {/* Left Wall */}
-      <mesh position={[-hallwayWidth / 2, hallwayHeight / 2, 0]} receiveShadow>
-        <boxGeometry args={[0.2, hallwayHeight, hallwayLength]} />
-        <meshStandardMaterial color="#d4c4b0" />
-      </mesh>
+      {/* Left Wall with door openings */}
+      <group>
+        {/* Left wall section 1 (before dev office) */}
+        <mesh position={[-hallwayWidth / 2, hallwayHeight / 2, -9]} receiveShadow>
+          <boxGeometry args={[0.2, hallwayHeight, 6]} />
+          <meshStandardMaterial color="#d4c4b0" />
+        </mesh>
+        
+        {/* Left wall section 2 (between offices) */}
+        <mesh position={[-hallwayWidth / 2, hallwayHeight / 2, 0]} receiveShadow>
+          <boxGeometry args={[0.2, hallwayHeight, 4]} />
+          <meshStandardMaterial color="#d4c4b0" />
+        </mesh>
+        
+        {/* Left wall section 3 (after designer office) */}
+        <mesh position={[-hallwayWidth / 2, hallwayHeight / 2, 11]} receiveShadow>
+          <boxGeometry args={[0.2, hallwayHeight, 8]} />
+          <meshStandardMaterial color="#d4c4b0" />
+        </mesh>
+      </group>
 
-      {/* Right Wall */}
-      <mesh position={[hallwayWidth / 2, hallwayHeight / 2, 0]} receiveShadow>
-        <boxGeometry args={[0.2, hallwayHeight, hallwayLength]} />
-        <meshStandardMaterial color="#d4c4b0" />
-      </mesh>
+      {/* Right Wall with door opening */}
+      <group>
+        {/* Right wall section 1 */}
+        <mesh position={[hallwayWidth / 2, hallwayHeight / 2, -8.5]} receiveShadow>
+          <boxGeometry args={[0.2, hallwayHeight, 13]} />
+          <meshStandardMaterial color="#d4c4b0" />
+        </mesh>
+        
+        {/* Right wall section 2 */}
+        <mesh position={[hallwayWidth / 2, hallwayHeight / 2, 8.5]} receiveShadow>
+          <boxGeometry args={[0.2, hallwayHeight, 13]} />
+          <meshStandardMaterial color="#d4c4b0" />
+        </mesh>
+      </group>
 
       {/* Ceiling */}
       <mesh position={[0, hallwayHeight, 0]} receiveShadow>
@@ -37,10 +68,17 @@ export function Hallway() {
         <meshStandardMaterial color="#d4c4b0" />
       </mesh>
       
-      <mesh position={[0, hallwayHeight / 2, -hallwayLength / 2]} receiveShadow>
-        <boxGeometry args={[hallwayWidth, hallwayHeight, 0.2]} />
-        <meshStandardMaterial color="#d4c4b0" />
-      </mesh>
+      {/* End wall with CEO office door opening */}
+      <group>
+        <mesh position={[-1.5, hallwayHeight / 2, -hallwayLength / 2]} receiveShadow>
+          <boxGeometry args={[1, hallwayHeight, 0.2]} />
+          <meshStandardMaterial color="#d4c4b0" />
+        </mesh>
+        <mesh position={[1.5, hallwayHeight / 2, -hallwayLength / 2]} receiveShadow>
+          <boxGeometry args={[1, hallwayHeight, 0.2]} />
+          <meshStandardMaterial color="#d4c4b0" />
+        </mesh>
+      </group>
 
       {/* Ceiling Lights */}
       {[-10, -3, 3, 10].map((z, i) => (
@@ -103,6 +141,42 @@ export function Hallway() {
       >
         CEO Office ↑
       </Text>
+
+      {/* Doors */}
+      <Door
+        position={[-2, 0, -5]}
+        rotation={[0, Math.PI / 2, 0]}
+        isOpen={doorStates?.get('dev-office-door') || false}
+        onInteract={() => onDoorInteract?.('dev-office-door')}
+        label="Developer Office"
+        playerPosition={playerPosition}
+      />
+      
+      <Door
+        position={[-2, 0, 5]}
+        rotation={[0, Math.PI / 2, 0]}
+        isOpen={doorStates?.get('designer-office-door') || false}
+        onInteract={() => onDoorInteract?.('designer-office-door')}
+        label="Designer Office"
+        playerPosition={playerPosition}
+      />
+      
+      <Door
+        position={[2, 0, 0]}
+        rotation={[0, -Math.PI / 2, 0]}
+        isOpen={doorStates?.get('marketing-office-door') || false}
+        onInteract={() => onDoorInteract?.('marketing-office-door')}
+        label="Marketing Office"
+        playerPosition={playerPosition}
+      />
+      
+      <Door
+        position={[0, 0, -13]}
+        isOpen={doorStates?.get('ceo-office-door') || false}
+        onInteract={() => onDoorInteract?.('ceo-office-door')}
+        label="CEO Office"
+        playerPosition={playerPosition}
+      />
     </group>
   );
 }

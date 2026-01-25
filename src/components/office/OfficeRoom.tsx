@@ -8,6 +8,7 @@ interface OfficeRoomProps {
   name: string;
   color?: string;
   isCEO?: boolean;
+  doorDirection?: 'north' | 'south' | 'east' | 'west';
 }
 
 export function OfficeRoom({ 
@@ -15,7 +16,8 @@ export function OfficeRoom({
   size = [6, 3, 6], 
   name, 
   color = '#8B7355',
-  isCEO = false 
+  isCEO = false,
+  doorDirection = 'south'
 }: OfficeRoomProps) {
   const roomSize = isCEO ? [8, 3.5, 8] as [number, number, number] : size;
   
@@ -27,23 +29,38 @@ export function OfficeRoom({
         <meshStandardMaterial color={isCEO ? '#2C1810' : '#3D2817'} />
       </mesh>
 
-      {/* Back Wall */}
-      <mesh position={[0, roomSize[1] / 2, -roomSize[2] / 2]} receiveShadow>
-        <boxGeometry args={[roomSize[0], roomSize[1], 0.15]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
+      {/* Walls - only render walls that don't have doors */}
+      {/* Back Wall (opposite to door) */}
+      {doorDirection !== 'north' && (
+        <mesh position={[0, roomSize[1] / 2, -roomSize[2] / 2]} receiveShadow>
+          <boxGeometry args={[roomSize[0], roomSize[1], 0.15]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+      )}
+      
+      {/* Front Wall (door side) - only render if door is not on this side */}
+      {doorDirection !== 'south' && (
+        <mesh position={[0, roomSize[1] / 2, roomSize[2] / 2]} receiveShadow>
+          <boxGeometry args={[roomSize[0], roomSize[1], 0.15]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+      )}
 
       {/* Left Wall */}
-      <mesh position={[-roomSize[0] / 2, roomSize[1] / 2, 0]} receiveShadow>
-        <boxGeometry args={[0.15, roomSize[1], roomSize[2]]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
+      {doorDirection !== 'west' && (
+        <mesh position={[-roomSize[0] / 2, roomSize[1] / 2, 0]} receiveShadow>
+          <boxGeometry args={[0.15, roomSize[1], roomSize[2]]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+      )}
 
       {/* Right Wall */}
-      <mesh position={[roomSize[0] / 2, roomSize[1] / 2, 0]} receiveShadow>
-        <boxGeometry args={[0.15, roomSize[1], roomSize[2]]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
+      {doorDirection !== 'east' && (
+        <mesh position={[roomSize[0] / 2, roomSize[1] / 2, 0]} receiveShadow>
+          <boxGeometry args={[0.15, roomSize[1], roomSize[2]]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+      )}
 
       {/* Desk */}
       <Desk position={[0, 0, -1.5]} isCEO={isCEO} />

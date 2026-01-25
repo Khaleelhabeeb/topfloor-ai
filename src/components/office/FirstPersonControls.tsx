@@ -1,17 +1,20 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { CollisionSystem } from './CollisionSystem';
 
 interface FirstPersonControlsProps {
   speed?: number;
   enabled?: boolean;
   onPositionChange?: (position: THREE.Vector3) => void;
+  collisionSystem?: CollisionSystem;
 }
 
 export function FirstPersonControls({ 
   speed = 4, 
   enabled = true,
-  onPositionChange 
+  onPositionChange,
+  collisionSystem 
 }: FirstPersonControlsProps) {
   const { camera, gl } = useThree();
   const moveState = useRef({
@@ -126,24 +129,49 @@ export function FirstPersonControls({
       .multiplyScalar(speed * delta)
       .applyEuler(new THREE.Euler(0, euler.current.y, 0));
 
-    // Simple boundary check
-    const newX = camera.position.x + direction.x;
-    const newZ = camera.position.z + direction.z;
+    // Calculate new position
+    const newPosition = camera.position.clone().add(direction);
+    newPosition.y = 1.7; // Keep at eye level
 
-    // Hallway boundaries
-    if (Math.abs(newX) < 1.8 && Math.abs(newZ) < 14) {
-      camera.position.x = newX;
-      camera.position.z = newZ;
-    }
-    // Office entrance zones - allow wider movement when in office areas
-    else if (newZ < -10 && newZ > -18 && Math.abs(newX) < 4) {
-      // CEO office zone
-      camera.position.x = newX;
-      camera.position.z = newZ;
-    } else if (Math.abs(newX) > 1.8 && Math.abs(newX) < 10) {
-      // Side offices zone
-      camera.position.x = newX;
-      camera.position.z = newZ;
+    // Check collision if collision system is available
+    if (collisionSystem) {
+      if (!collisionSystem.checkCollision(newPosition)) {
+        camera.position.copy(newPosition);
+      } else {
+        // Try moving only on X axis
+        const newX = camera.position.clone();
+        newX.x = newPosition.x;
+        if (!collisionSystem.checkCollision(newX)) {
+          camera.position.copy(newX);
+        } else {
+          // Try moving only on Z axis
+          const newZ = camera.position.clone();
+          newZ.z = newPosition.z;
+          if (!collisionSystem.checkCollision(newZ)) {
+            camera.position.copy(newZ);
+          }
+        }
+      }
+    } else {
+      // Fallback to old boundary system
+      const newX = camera.position.x + direction.x;
+      const newZ = camera.position.z + direction.z;
+
+      // Hallway boundaries
+      if (Math.abs(newX) < 1.8 && Math.abs(newZ) < 14) {
+        camera.position.x = newX;
+        camera.position.z = newZ;
+      }
+      // Office entrance zones - allow wider movement when in office areas
+      else if (newZ < -10 && newZ > -18 && Math.abs(newX) < 4) {
+        // CEO office zone
+        camera.position.x = newX;
+        camera.position.z = newZ;
+      } else if (Math.abs(newX) > 1.8 && Math.abs(newX) < 10) {
+        // Side offices zone
+        camera.position.x = newX;
+        camera.position.z = newZ;
+      }
     }
 
     camera.position.y = 1.7; // Keep at eye level

@@ -21,16 +21,28 @@ export function CEOOffice({ position, onFolderSelect, isSeated }: CEOOfficeProps
       </mesh>
 
       {/* Walls */}
+      {/* Back wall */}
       <mesh position={[0, roomSize[1] / 2, -roomSize[2] / 2]} receiveShadow>
         <boxGeometry args={[roomSize[0], roomSize[1], 0.2]} />
         <meshStandardMaterial color="#2c2418" />
       </mesh>
+      {/* Left wall */}
       <mesh position={[-roomSize[0] / 2, roomSize[1] / 2, 0]} receiveShadow>
         <boxGeometry args={[0.2, roomSize[1], roomSize[2]]} />
         <meshStandardMaterial color="#2c2418" />
       </mesh>
+      {/* Right wall */}
       <mesh position={[roomSize[0] / 2, roomSize[1] / 2, 0]} receiveShadow>
         <boxGeometry args={[0.2, roomSize[1], roomSize[2]]} />
+        <meshStandardMaterial color="#2c2418" />
+      </mesh>
+      {/* Front wall sections (with door opening) */}
+      <mesh position={[-3, roomSize[1] / 2, roomSize[2] / 2]} receiveShadow>
+        <boxGeometry args={[4, roomSize[1], 0.2]} />
+        <meshStandardMaterial color="#2c2418" />
+      </mesh>
+      <mesh position={[3, roomSize[1] / 2, roomSize[2] / 2]} receiveShadow>
+        <boxGeometry args={[4, roomSize[1], 0.2]} />
         <meshStandardMaterial color="#2c2418" />
       </mesh>
 

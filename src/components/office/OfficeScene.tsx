@@ -8,6 +8,7 @@ import { CEOOffice } from './CEOOffice';
 import { FirstPersonControls } from './FirstPersonControls';
 import { ChatInterface } from './ChatInterface';
 import { DocumentViewer } from './DocumentViewer';
+import { CollisionSystem } from './CollisionSystem';
 import { teamMembers } from './data';
 import { TeamMember, Folder, OfficeState } from './types';
 
@@ -20,39 +21,44 @@ export function OfficeScene() {
   });
 
   const [showInstructions, setShowInstructions] = useState(true);
+  const [playerPosition, setPlayerPosition] = useState<THREE.Vector3>(new THREE.Vector3(0, 1.7, 10));
+  const [doorStates, setDoorStates] = useState<Map<string, boolean>>(new Map());
+  
+  // Initialize collision system
+  const collisionSystemRef = useRef<CollisionSystem>(new CollisionSystem());
 
   const checkRoomEntry = useCallback((position: THREE.Vector3) => {
-    // Check if player entered Developer office (left side, z around -5)
-    if (position.x < -3 && position.z > -8 && position.z < -2) {
-      if (state.currentRoom !== 'office1' && !state.activeMember) {
-        setState(prev => ({ ...prev, currentRoom: 'office1', activeMember: teamMembers[0] }));
-      }
-    }
-    // Check if player entered Designer office (left side, z around 5)
-    else if (position.x < -3 && position.z > 2 && position.z < 8) {
-      if (state.currentRoom !== 'office2' && !state.activeMember) {
-        setState(prev => ({ ...prev, currentRoom: 'office2', activeMember: teamMembers[1] }));
-      }
-    }
-    // Check if player entered Marketing office (right side)
-    else if (position.x > 3 && position.z > -3 && position.z < 3) {
-      if (state.currentRoom !== 'office3' && !state.activeMember) {
-        setState(prev => ({ ...prev, currentRoom: 'office3', activeMember: teamMembers[2] }));
-      }
-    }
-    // Check if player entered CEO office (far end)
-    else if (position.z < -12) {
-      if (state.currentRoom !== 'ceo') {
-        setState(prev => ({ ...prev, currentRoom: 'ceo' }));
-      }
-    }
-    // Back in hallway
-    else if (Math.abs(position.x) < 2 && position.z > -12) {
-      if (state.currentRoom !== 'hallway') {
-        setState(prev => ({ ...prev, currentRoom: 'hallway' }));
-      }
+    setPlayerPosition(position);
+    
+    const currentRoom = collisionSystemRef.current.getPlayerRoom(position);
+    
+    // Handle room transitions
+    if (currentRoom === 'office1' && state.currentRoom !== 'office1' && !state.activeMember) {
+      setState(prev => ({ ...prev, currentRoom: 'office1', activeMember: teamMembers[0] }));
+    } else if (currentRoom === 'office2' && state.currentRoom !== 'office2' && !state.activeMember) {
+      setState(prev => ({ ...prev, currentRoom: 'office2', activeMember: teamMembers[1] }));
+    } else if (currentRoom === 'office3' && state.currentRoom !== 'office3' && !state.activeMember) {
+      setState(prev => ({ ...prev, currentRoom: 'office3', activeMember: teamMembers[2] }));
+    } else if (currentRoom === 'ceo' && state.currentRoom !== 'ceo') {
+      setState(prev => ({ ...prev, currentRoom: 'ceo' }));
+    } else if (currentRoom === 'hallway' && state.currentRoom !== 'hallway') {
+      setState(prev => ({ ...prev, currentRoom: 'hallway' }));
     }
   }, [state.currentRoom, state.activeMember]);
+
+  const handleDoorInteract = useCallback((doorId: string) => {
+    const collisionSystem = collisionSystemRef.current;
+    const isOpen = collisionSystem.isDoorOpen(doorId);
+    
+    if (isOpen) {
+      collisionSystem.closeDoor(doorId);
+    } else {
+      collisionSystem.openDoor(doorId);
+    }
+    
+    // Update door states for rendering
+    setDoorStates(new Map(collisionSystem.getAllDoors().map(door => [door.id, door.isOpen])));
+  }, []);
 
   const handleFolderSelect = useCallback((folder: Folder) => {
     setState(prev => ({ ...prev, activeFolder: folder }));
@@ -66,7 +72,7 @@ export function OfficeScene() {
     setState(prev => ({ ...prev, activeFolder: null }));
   }, []);
 
-  // Handle ESC key to close overlays
+  // Handle ESC key to close overlays and E key for door interaction
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code === 'Escape') {
@@ -76,9 +82,23 @@ export function OfficeScene() {
           handleCloseChat();
         }
       }
-      // E key to sit in CEO office
-      if (event.code === 'KeyE' && state.currentRoom === 'ceo' && !state.isSeated) {
-        setState(prev => ({ ...prev, isSeated: true }));
+      // E key to sit in CEO office or interact with doors
+      if (event.code === 'KeyE') {
+        if (state.currentRoom === 'ceo' && !state.isSeated) {
+          setState(prev => ({ ...prev, isSeated: true }));
+        } else {
+          // Check if player is near any door and interact with it
+          const collisionSystem = collisionSystemRef.current;
+          const doors = collisionSystem.getAllDoors();
+          
+          for (const door of doors) {
+            const distance = playerPosition.distanceTo(door.position);
+            if (distance < 2) {
+              handleDoorInteract(door.id);
+              break;
+            }
+          }
+        }
       }
       // Q key to stand up
       if (event.code === 'KeyQ' && state.isSeated) {
@@ -88,7 +108,7 @@ export function OfficeScene() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.activeFolder, state.activeMember, state.currentRoom, state.isSeated, handleCloseChat, handleCloseDocument]);
+  }, [state.activeFolder, state.activeMember, state.currentRoom, state.isSeated, playerPosition, handleCloseChat, handleCloseDocument, handleDoorInteract]);
 
   const controlsEnabled = !state.activeMember && !state.activeFolder;
 
@@ -103,12 +123,12 @@ export function OfficeScene() {
               <p><strong>Controls:</strong></p>
               <p>• <kbd className="px-1 bg-muted rounded">WASD</kbd> - Move around</p>
               <p>• <kbd className="px-1 bg-muted rounded">Mouse</kbd> - Look around (click to lock)</p>
-              <p>• <kbd className="px-1 bg-muted rounded">E</kbd> - Sit in CEO chair</p>
+              <p>• <kbd className="px-1 bg-muted rounded">E</kbd> - Interact with doors / Sit in CEO chair</p>
               <p>• <kbd className="px-1 bg-muted rounded">Q</kbd> - Stand up</p>
               <p>• <kbd className="px-1 bg-muted rounded">ESC</kbd> - Close dialogs / unlock mouse</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              Walk into team offices to see their info. Visit the CEO office to access folders.
+              Approach doors to see interaction prompts. Walk into team offices to see their info. Visit the CEO office to access folders.
             </p>
             <button 
               onClick={() => setShowInstructions(false)}
@@ -139,7 +159,7 @@ export function OfficeScene() {
 
       {/* Mini controls hint */}
       <div className="absolute bottom-4 left-4 z-40 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-lg border border-border text-xs text-muted-foreground">
-        WASD to move • Click to look
+        WASD to move • Click to look • E to interact
       </div>
 
       {/* 3D Canvas */}
@@ -154,23 +174,30 @@ export function OfficeScene() {
         />
 
         {/* Main Hallway */}
-        <Hallway />
+        <Hallway 
+          onDoorInteract={handleDoorInteract}
+          doorStates={doorStates}
+          playerPosition={playerPosition}
+        />
 
         {/* Team Member Offices */}
         <OfficeRoom
           position={[-6, 0, -5]}
           name="Alex Chen - Developer"
           color="#6B7280"
+          doorDirection="east"
         />
         <OfficeRoom
           position={[-6, 0, 5]}
           name="Sarah Miller - Designer"
           color="#8B5CF6"
+          doorDirection="east"
         />
         <OfficeRoom
           position={[6, 0, 0]}
           name="Jordan Park - Marketing"
           color="#F59E0B"
+          doorDirection="west"
         />
 
         {/* CEO Office */}
@@ -185,6 +212,7 @@ export function OfficeScene() {
           speed={4}
           enabled={controlsEnabled}
           onPositionChange={checkRoomEntry}
+          collisionSystem={collisionSystemRef.current}
         />
       </Canvas>
 
