@@ -165,10 +165,10 @@ export function OfficeScene() {
       {/* 3D Canvas */}
       <Canvas shadows camera={{ fov: 75, near: 0.1, far: 1000 }}>
         <Sky sunPosition={[100, 20, 100]} />
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={0.6} />
         <directionalLight
           position={[10, 20, 10]}
-          intensity={0.8}
+          intensity={1.2}
           castShadow
           shadow-mapSize={[2048, 2048]}
         />
@@ -184,19 +184,19 @@ export function OfficeScene() {
         <OfficeRoom
           position={[-6, 0, -5]}
           name="Alex Chen - Developer"
-          color="#6B7280"
+          color="#8B8680"
           doorDirection="east"
         />
         <OfficeRoom
           position={[-6, 0, 5]}
           name="Sarah Miller - Designer"
-          color="#8B5CF6"
+          color="#9B8B9B"
           doorDirection="east"
         />
         <OfficeRoom
           position={[6, 0, 0]}
           name="Jordan Park - Marketing"
-          color="#F59E0B"
+          color="#B8A082"
           doorDirection="west"
         />
 

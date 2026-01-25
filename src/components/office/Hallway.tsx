@@ -57,8 +57,26 @@ export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayP
       </group>
 
       {/* Ceiling */}
-      <mesh position={[0, hallwayHeight, 0]} receiveShadow>
+      <mesh position={[0, hallwayHeight, 0]} receiveShadow castShadow>
         <boxGeometry args={[hallwayWidth, 0.15, hallwayLength]} />
+        <meshStandardMaterial color="#e8e0d5" />
+      </mesh>
+
+      {/* Ceiling extension over door areas to prevent sky gaps */}
+      <mesh position={[-4, hallwayHeight, -5]} receiveShadow castShadow>
+        <boxGeometry args={[4, 0.15, 6]} />
+        <meshStandardMaterial color="#e8e0d5" />
+      </mesh>
+      <mesh position={[-4, hallwayHeight, 5]} receiveShadow castShadow>
+        <boxGeometry args={[4, 0.15, 6]} />
+        <meshStandardMaterial color="#e8e0d5" />
+      </mesh>
+      <mesh position={[4, hallwayHeight, 0]} receiveShadow castShadow>
+        <boxGeometry args={[4, 0.15, 6]} />
+        <meshStandardMaterial color="#e8e0d5" />
+      </mesh>
+      <mesh position={[0, hallwayHeight, -15.5]} receiveShadow castShadow>
+        <boxGeometry args={[10, 0.15, 5]} />
         <meshStandardMaterial color="#e8e0d5" />
       </mesh>
 
