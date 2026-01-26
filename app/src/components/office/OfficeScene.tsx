@@ -39,6 +39,8 @@ export function OfficeScene() {
       setState(prev => ({ ...prev, currentRoom: 'office2', activeMember: teamMembers[1] }));
     } else if (currentRoom === 'office3' && state.currentRoom !== 'office3' && !state.activeMember) {
       setState(prev => ({ ...prev, currentRoom: 'office3', activeMember: teamMembers[2] }));
+    } else if (currentRoom === 'office4' && state.currentRoom !== 'office4' && !state.activeMember) {
+      setState(prev => ({ ...prev, currentRoom: 'office4', activeMember: teamMembers[3] }));
     } else if (currentRoom === 'ceo' && state.currentRoom !== 'ceo') {
       setState(prev => ({ ...prev, currentRoom: 'ceo' }));
     } else if (currentRoom === 'hallway' && state.currentRoom !== 'hallway') {
@@ -147,6 +149,10 @@ export function OfficeScene() {
           <span className="font-medium capitalize">
             {state.currentRoom === 'ceo' ? 'CEO Office' : 
              state.currentRoom === 'hallway' ? 'Hallway' :
+             state.currentRoom === 'office1' ? 'James Wilson\'s Office' :
+             state.currentRoom === 'office2' ? 'Sarah Miller\'s Office' :
+             state.currentRoom === 'office3' ? 'Alex Chen\'s Office' :
+             state.currentRoom === 'office4' ? 'Peter Rodriguez\'s Office' :
              state.currentRoom.replace('office', 'Office ')}
           </span>
         </p>
@@ -183,20 +189,26 @@ export function OfficeScene() {
         {/* Team Member Offices */}
         <OfficeRoom
           position={[-6, 0, -5]}
-          name="Alex Chen - Developer"
+          name="James Wilson"
           color="#8B8680"
           doorDirection="east"
         />
         <OfficeRoom
           position={[-6, 0, 5]}
-          name="Sarah Miller - Designer"
+          name="Sarah Miller"
           color="#9B8B9B"
           doorDirection="east"
         />
         <OfficeRoom
           position={[6, 0, 0]}
-          name="Jordan Park - Marketing"
+          name="Alex Chen"
           color="#B8A082"
+          doorDirection="west"
+        />
+        <OfficeRoom
+          position={[6, 0, 10]}
+          name="Peter Rodriguez"
+          color="#A8B8A0"
           doorDirection="west"
         />
 

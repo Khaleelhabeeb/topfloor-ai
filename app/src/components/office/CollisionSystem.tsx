@@ -49,14 +49,17 @@ export class CollisionSystem {
     const officeSize = 6;
     const officeHeight = 3;
     
-    // Developer office (-6, 0, -5)
-    this.addOfficeWalls([-6, 0, -5], officeSize, officeHeight, 'dev-office');
+    // James Wilson's office (-6, 0, -5)
+    this.addOfficeWalls([-6, 0, -5], officeSize, officeHeight, 'james-office');
     
-    // Designer office (-6, 0, 5)
-    this.addOfficeWalls([-6, 0, 5], officeSize, officeHeight, 'designer-office');
+    // Sarah Miller's office (-6, 0, 5)
+    this.addOfficeWalls([-6, 0, 5], officeSize, officeHeight, 'sarah-office');
     
-    // Marketing office (6, 0, 0)
-    this.addOfficeWalls([6, 0, 0], officeSize, officeHeight, 'marketing-office');
+    // Alex Chen's office (6, 0, 0)
+    this.addOfficeWalls([6, 0, 0], officeSize, officeHeight, 'alex-office');
+    
+    // Peter Rodriguez's office (6, 0, 10)
+    this.addOfficeWalls([6, 0, 10], officeSize, officeHeight, 'peter-office');
     
     // CEO office (0, 0, -18)
     this.addOfficeWalls([0, 0, -18], 8, 3.5, 'ceo-office');
@@ -70,8 +73,8 @@ export class CollisionSystem {
     // Only add walls that don't interfere with door access
     // Each office has different wall configurations based on door position
 
-    if (officeId === 'dev-office') {
-      // Developer office at (-6, 0, -5) - door faces hallway (positive Z direction)
+    if (officeId === 'james-office') {
+      // James Wilson's office at (-6, 0, -5) - door faces hallway (positive Z direction)
       // Back wall (away from hallway)
       this.collisionBoxes.push({
         min: new THREE.Vector3(x - halfSize, y, z - halfSize - wallThickness),
@@ -93,8 +96,8 @@ export class CollisionSystem {
         type: 'wall',
         id: `${officeId}-right`
       });
-    } else if (officeId === 'designer-office') {
-      // Designer office at (-6, 0, 5) - door faces hallway (negative Z direction)
+    } else if (officeId === 'sarah-office') {
+      // Sarah Miller's office at (-6, 0, 5) - door faces hallway (negative Z direction)
       // Back wall (away from hallway)
       this.collisionBoxes.push({
         min: new THREE.Vector3(x - halfSize, y, z + halfSize),
@@ -116,8 +119,31 @@ export class CollisionSystem {
         type: 'wall',
         id: `${officeId}-right`
       });
-    } else if (officeId === 'marketing-office') {
-      // Marketing office at (6, 0, 0) - door faces hallway (negative X direction)
+    } else if (officeId === 'alex-office') {
+      // Alex Chen's office at (6, 0, 0) - door faces hallway (negative X direction)
+      // Back wall (away from hallway)
+      this.collisionBoxes.push({
+        min: new THREE.Vector3(x + halfSize, y, z - halfSize),
+        max: new THREE.Vector3(x + halfSize + wallThickness, y + height, z + halfSize),
+        type: 'wall',
+        id: `${officeId}-back`
+      });
+      // Left wall
+      this.collisionBoxes.push({
+        min: new THREE.Vector3(x - halfSize, y, z - halfSize - wallThickness),
+        max: new THREE.Vector3(x + halfSize, y + height, z - halfSize),
+        type: 'wall',
+        id: `${officeId}-left`
+      });
+      // Right wall
+      this.collisionBoxes.push({
+        min: new THREE.Vector3(x - halfSize, y, z + halfSize),
+        max: new THREE.Vector3(x + halfSize, y + height, z + halfSize + wallThickness),
+        type: 'wall',
+        id: `${officeId}-right`
+      });
+    } else if (officeId === 'peter-office') {
+      // Peter Rodriguez's office at (6, 0, 10) - door faces hallway (negative X direction)
       // Back wall (away from hallway)
       this.collisionBoxes.push({
         min: new THREE.Vector3(x + halfSize, y, z - halfSize),
@@ -167,24 +193,31 @@ export class CollisionSystem {
 
   private initializeDoors() {
     // Initialize door states
-    this.doorStates.set('dev-office-door', {
-      id: 'dev-office-door',
+    this.doorStates.set('james-office-door', {
+      id: 'james-office-door',
       isOpen: false,
       position: new THREE.Vector3(-2, 0, -5),
       rotation: Math.PI / 2
     });
 
-    this.doorStates.set('designer-office-door', {
-      id: 'designer-office-door',
+    this.doorStates.set('sarah-office-door', {
+      id: 'sarah-office-door',
       isOpen: false,
       position: new THREE.Vector3(-2, 0, 5),
       rotation: Math.PI / 2
     });
 
-    this.doorStates.set('marketing-office-door', {
-      id: 'marketing-office-door',
+    this.doorStates.set('alex-office-door', {
+      id: 'alex-office-door',
       isOpen: false,
       position: new THREE.Vector3(2, 0, 0),
+      rotation: -Math.PI / 2
+    });
+
+    this.doorStates.set('peter-office-door', {
+      id: 'peter-office-door',
+      isOpen: false,
+      position: new THREE.Vector3(2, 0, 10),
       rotation: -Math.PI / 2
     });
 
@@ -267,17 +300,21 @@ export class CollisionSystem {
   }
 
   getPlayerRoom(position: THREE.Vector3): string {
-    // Developer office - left side, behind door at (-2, 0, -5)
+    // James Wilson's office - left side, behind door at (-2, 0, -5)
     if (position.x < -2.5 && position.z > -8 && position.z < -2) {
       return 'office1';
     }
-    // Designer office - left side, behind door at (-2, 0, 5)
+    // Sarah Miller's office - left side, behind door at (-2, 0, 5)
     if (position.x < -2.5 && position.z > 2 && position.z < 8) {
       return 'office2';
     }
-    // Marketing office - right side, behind door at (2, 0, 0)
+    // Alex Chen's office - right side, behind door at (2, 0, 0)
     if (position.x > 2.5 && position.z > -3 && position.z < 3) {
       return 'office3';
+    }
+    // Peter Rodriguez's office - right side, behind door at (2, 0, 10)
+    if (position.x > 2.5 && position.z > 7 && position.z < 13) {
+      return 'office4';
     }
     // CEO office - behind door at (0, 0, -13)
     if (position.z < -13.5) {

@@ -104,9 +104,22 @@ export function Door({
         </mesh>
       </group>
 
+      {/* Name plate on door frame - always visible */}
+      <Text
+        position={[0, doorHeight + 0.3, doorThickness/2 + 0.1]}
+        fontSize={0.18}
+        color="#2D1810"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.01}
+        outlineColor="#FFFFFF"
+      >
+        {label}
+      </Text>
+
       {/* Interaction Prompt */}
       {showPrompt && (
-        <group position={[0, doorHeight + 0.5, 0]}>
+        <group position={[0, doorHeight + 0.7, 0]}>
           <Text
             fontSize={0.2}
             color="#FFFFFF"
@@ -117,19 +130,6 @@ export function Door({
           >
             {isOpen ? "Door Open" : "Press E to Enter"}
           </Text>
-          {label && (
-            <Text
-              position={[0, -0.3, 0]}
-              fontSize={0.15}
-              color="#CCCCCC"
-              anchorX="center"
-              anchorY="middle"
-              outlineWidth={0.01}
-              outlineColor="#000000"
-            >
-              {label}
-            </Text>
-          )}
         </group>
       )}
 

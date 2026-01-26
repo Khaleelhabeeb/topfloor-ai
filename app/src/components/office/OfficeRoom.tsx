@@ -96,28 +96,102 @@ export function OfficeRoom({
         <meshStandardMaterial color="#FFFFFF" />
       </mesh>
 
-      {/* Desk */}
-      <Desk position={[0, 0, -1.5]} isCEO={isCEO} />
+      {/* Desk - positioned against back wall */}
+      <Desk position={[0, 0, -roomSize[2]/2 + 1.2]} isCEO={isCEO} />
 
-      {/* Chair */}
-      <Chair position={[0, 0, 0.5]} isCEO={isCEO} />
+      {/* Chair - positioned properly in front of desk */}
+      <Chair position={[0, 0, -roomSize[2]/2 + 2.2]} isCEO={isCEO} />
 
-      {/* Name Plate */}
+      {/* Name Plate on door */}
       <Text
-        position={[0, 2.5, -roomSize[2] / 2 + 0.1]}
-        fontSize={0.3}
-        color="#FFFFFF"
+        position={[0, 2.2, roomSize[2] / 2 - 0.05]}
+        fontSize={0.25}
+        color="#2D1810"
         anchorX="center"
         anchorY="middle"
+        outlineWidth={0.01}
+        outlineColor="#FFFFFF"
       >
         {name}
       </Text>
 
-      {/* Decorative elements */}
-      <Plant position={[roomSize[0] / 2 - 0.5, 0, roomSize[2] / 2 - 0.5]} />
+      {/* Decorative elements - better positioned */}
+      <Plant position={[roomSize[0] / 2 - 0.8, 0, roomSize[2] / 2 - 0.8]} />
       
-      {/* Computer Monitor on desk */}
-      <Monitor position={[0, 0.85, -1.8]} />
+      {/* Computer Monitor on desk - properly positioned */}
+      <Monitor position={[0, 0.85, -roomSize[2]/2 + 0.9]} />
+
+      {/* Additional office furniture for realism */}
+      {/* Filing cabinet - better positioned */}
+      <group position={[-roomSize[0]/2 + 0.8, 0, -roomSize[2]/2 + 0.8]}>
+        <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.4, 1.2, 0.6]} />
+          <meshStandardMaterial color="#D3D3D3" />
+        </mesh>
+        {/* Drawer handles */}
+        <mesh position={[0.21, 0.8, 0]} castShadow>
+          <boxGeometry args={[0.02, 0.05, 0.3]} />
+          <meshStandardMaterial color="#808080" />
+        </mesh>
+        <mesh position={[0.21, 0.4, 0]} castShadow>
+          <boxGeometry args={[0.02, 0.05, 0.3]} />
+          <meshStandardMaterial color="#808080" />
+        </mesh>
+      </group>
+
+      {/* Bookshelf */}
+      <group position={[roomSize[0]/2 - 0.4, 0, -roomSize[2]/2 + 2]}>
+        <mesh position={[0, 1, 0]} castShadow receiveShadow>
+          <boxGeometry args={[0.3, 2, 1.5]} />
+          <meshStandardMaterial color="#8B4513" />
+        </mesh>
+        {/* Books */}
+        {Array.from({ length: 8 }, (_, i) => (
+          <mesh key={i} position={[0.16, 0.3 + (i % 4) * 0.4, -0.6 + (Math.floor(i/4)) * 1.2]} castShadow>
+            <boxGeometry args={[0.02, 0.25, 0.15]} />
+            <meshStandardMaterial color={['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'][i % 4]} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Waste basket - better positioned */}
+      <group position={[1.2, 0, -roomSize[2]/2 + 2.8]}>
+        <mesh position={[0, 0.15, 0]} castShadow>
+          <cylinderGeometry args={[0.15, 0.12, 0.3, 12]} />
+          <meshStandardMaterial color="#2F4F4F" />
+        </mesh>
+      </group>
+
+      {/* Wall art/whiteboard - better positioned */}
+      <mesh position={[-roomSize[0]/2 + 0.08, 1.5, 0]} castShadow>
+        <boxGeometry args={[0.02, 0.6, 0.8]} />
+        <meshStandardMaterial color="#FFFFFF" />
+      </mesh>
+
+      {/* Desk lamp */}
+      <group position={[0.6, 0.77, -roomSize[2]/2 + 0.9]}>
+        <mesh position={[0, 0.3, 0]} castShadow>
+          <cylinderGeometry args={[0.02, 0.02, 0.6, 8]} />
+          <meshStandardMaterial color="#2D2D2D" />
+        </mesh>
+        <mesh position={[0, 0.6, 0]} castShadow>
+          <sphereGeometry args={[0.08, 8, 8]} />
+          <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.2} />
+        </mesh>
+        <pointLight position={[0, 0.6, 0]} intensity={0.5} distance={3} color="#FFD700" />
+      </group>
+
+      {/* Coffee mug on desk */}
+      <group position={[-0.4, 0.77, -roomSize[2]/2 + 1.1]}>
+        <mesh position={[0, 0.05, 0]} castShadow>
+          <cylinderGeometry args={[0.04, 0.035, 0.1, 12]} />
+          <meshStandardMaterial color="#FFFFFF" />
+        </mesh>
+        <mesh position={[0.045, 0.05, 0]} castShadow>
+          <torusGeometry args={[0.02, 0.005, 8, 16]} />
+          <meshStandardMaterial color="#FFFFFF" />
+        </mesh>
+      </group>
 
       {/* Office Lighting - More realistic */}
       <pointLight 
@@ -152,38 +226,6 @@ export function OfficeRoom({
           <meshStandardMaterial color="#C0C0C0" />
         </mesh>
       </group>
-
-      {/* Additional office furniture for realism */}
-      {/* Filing cabinet */}
-      <group position={[roomSize[0]/2 - 0.8, 0, -roomSize[2]/2 + 0.8]}>
-        <mesh position={[0, 0.6, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.4, 1.2, 0.6]} />
-          <meshStandardMaterial color="#D3D3D3" />
-        </mesh>
-        {/* Drawer handles */}
-        <mesh position={[0.21, 0.8, 0]} castShadow>
-          <boxGeometry args={[0.02, 0.05, 0.3]} />
-          <meshStandardMaterial color="#808080" />
-        </mesh>
-        <mesh position={[0.21, 0.4, 0]} castShadow>
-          <boxGeometry args={[0.02, 0.05, 0.3]} />
-          <meshStandardMaterial color="#808080" />
-        </mesh>
-      </group>
-
-      {/* Waste basket */}
-      <group position={[0.8, 0, 0.8]}>
-        <mesh position={[0, 0.15, 0]} castShadow>
-          <cylinderGeometry args={[0.15, 0.12, 0.3, 12]} />
-          <meshStandardMaterial color="#2F4F4F" />
-        </mesh>
-      </group>
-
-      {/* Wall art/whiteboard */}
-      <mesh position={[-roomSize[0]/2 + 0.08, 1.5, -1]} castShadow>
-        <boxGeometry args={[0.02, 0.6, 0.8]} />
-        <meshStandardMaterial color="#FFFFFF" />
-      </mesh>
     </group>
   );
 }
@@ -245,7 +287,7 @@ function Desk({ position, isCEO }: { position: [number, number, number]; isCEO: 
 
 function Chair({ position, isCEO }: { position: [number, number, number]; isCEO: boolean }) {
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, Math.PI, 0]}> {/* Rotate chair to face desk */}
       {/* Seat */}
       <mesh position={[0, 0.45, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.5, 0.08, 0.5]} />

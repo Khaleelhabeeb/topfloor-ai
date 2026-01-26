@@ -28,7 +28,7 @@ export interface Document {
 }
 
 export interface OfficeState {
-  currentRoom: 'hallway' | 'office1' | 'office2' | 'office3' | 'ceo';
+  currentRoom: 'hallway' | 'office1' | 'office2' | 'office3' | 'office4' | 'ceo';
   isSeated: boolean;
   activeFolder: Folder | null;
   activeMember: TeamMember | null;

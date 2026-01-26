@@ -41,7 +41,7 @@ export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayP
         </mesh>
       </group>
 
-      {/* Right Wall with door opening */}
+      {/* Right Wall with door openings */}
       <group>
         {/* Right wall section 1 */}
         <mesh position={[hallwayWidth / 2, hallwayHeight / 2, -8.5]} receiveShadow>
@@ -49,9 +49,15 @@ export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayP
           <meshStandardMaterial color="#d4c4b0" />
         </mesh>
         
-        {/* Right wall section 2 */}
-        <mesh position={[hallwayWidth / 2, hallwayHeight / 2, 8.5]} receiveShadow>
-          <boxGeometry args={[0.2, hallwayHeight, 13]} />
+        {/* Right wall section 2 (between marketing and peter's office) */}
+        <mesh position={[hallwayWidth / 2, hallwayHeight / 2, 5]} receiveShadow>
+          <boxGeometry args={[0.2, hallwayHeight, 4]} />
+          <meshStandardMaterial color="#d4c4b0" />
+        </mesh>
+        
+        {/* Right wall section 3 (after peter's office) */}
+        <mesh position={[hallwayWidth / 2, hallwayHeight / 2, 12.5]} receiveShadow>
+          <boxGeometry args={[0.2, hallwayHeight, 5]} />
           <meshStandardMaterial color="#d4c4b0" />
         </mesh>
       </group>
@@ -72,6 +78,10 @@ export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayP
         <meshStandardMaterial color="#e8e0d5" />
       </mesh>
       <mesh position={[4, hallwayHeight, 0]} receiveShadow>
+        <boxGeometry args={[4, 0.15, 6]} />
+        <meshStandardMaterial color="#e8e0d5" />
+      </mesh>
+      <mesh position={[4, hallwayHeight, 10]} receiveShadow>
         <boxGeometry args={[4, 0.15, 6]} />
         <meshStandardMaterial color="#e8e0d5" />
       </mesh>
@@ -128,7 +138,7 @@ export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayP
         anchorX="center"
         rotation={[0, Math.PI / 2, 0]}
       >
-        ← Developer Office
+        ← James Wilson
       </Text>
 
       <Text
@@ -138,17 +148,27 @@ export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayP
         anchorX="center"
         rotation={[0, Math.PI / 2, 0]}
       >
-        ← Designer Office
+        ← Sarah Miller
       </Text>
 
       <Text
-        position={[1.5, 2, 0]}
+        position={[1.5, 2, -2]}
         fontSize={0.2}
         color="#666666"
         anchorX="center"
         rotation={[0, -Math.PI / 2, 0]}
       >
-        Marketing Office →
+        Alex Chen →
+      </Text>
+
+      <Text
+        position={[1.5, 2, 8]}
+        fontSize={0.2}
+        color="#666666"
+        anchorX="center"
+        rotation={[0, -Math.PI / 2, 0]}
+      >
+        Peter Rodriguez →
       </Text>
 
       <Text
@@ -164,27 +184,36 @@ export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayP
       <Door
         position={[-2, 0, -5]}
         rotation={[0, Math.PI / 2, 0]}
-        isOpen={doorStates?.get('dev-office-door') || false}
-        onInteract={() => onDoorInteract?.('dev-office-door')}
-        label="Developer Office"
+        isOpen={doorStates?.get('james-office-door') || false}
+        onInteract={() => onDoorInteract?.('james-office-door')}
+        label="James Wilson"
         playerPosition={playerPosition}
       />
       
       <Door
         position={[-2, 0, 5]}
         rotation={[0, Math.PI / 2, 0]}
-        isOpen={doorStates?.get('designer-office-door') || false}
-        onInteract={() => onDoorInteract?.('designer-office-door')}
-        label="Designer Office"
+        isOpen={doorStates?.get('sarah-office-door') || false}
+        onInteract={() => onDoorInteract?.('sarah-office-door')}
+        label="Sarah Miller"
         playerPosition={playerPosition}
       />
       
       <Door
         position={[2, 0, 0]}
         rotation={[0, -Math.PI / 2, 0]}
-        isOpen={doorStates?.get('marketing-office-door') || false}
-        onInteract={() => onDoorInteract?.('marketing-office-door')}
-        label="Marketing Office"
+        isOpen={doorStates?.get('alex-office-door') || false}
+        onInteract={() => onDoorInteract?.('alex-office-door')}
+        label="Alex Chen"
+        playerPosition={playerPosition}
+      />
+      
+      <Door
+        position={[2, 0, 10]}
+        rotation={[0, -Math.PI / 2, 0]}
+        isOpen={doorStates?.get('peter-office-door') || false}
+        onInteract={() => onDoorInteract?.('peter-office-door')}
+        label="Peter Rodriguez"
         playerPosition={playerPosition}
       />
       
@@ -192,7 +221,7 @@ export function Hallway({ onDoorInteract, doorStates, playerPosition }: HallwayP
         position={[0, 0, -13]}
         isOpen={doorStates?.get('ceo-office-door') || false}
         onInteract={() => onDoorInteract?.('ceo-office-door')}
-        label="CEO Office"
+        label="CEO"
         playerPosition={playerPosition}
       />
     </group>

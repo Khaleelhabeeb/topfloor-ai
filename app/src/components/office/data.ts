@@ -2,8 +2,8 @@ import { TeamMember, Folder } from './types';
 
 export const teamMembers: TeamMember[] = [
   {
-    id: 'dev',
-    name: 'Alex Chen',
+    id: 'james',
+    name: 'James Wilson',
     role: 'Senior Developer',
     avatar: '👨‍💻',
     bio: 'Full-stack developer with 8 years of experience. Passionate about clean code and innovative solutions. Currently leading the platform modernization initiative.',
@@ -13,13 +13,13 @@ export const teamMembers: TeamMember[] = [
       'Mobile App - React Native development'
     ],
     contact: {
-      email: 'alex.chen@company.com',
-      slack: '@alexchen'
+      email: 'james.wilson@company.com',
+      slack: '@jameswilson'
     },
     officePosition: [-8, 0, -5]
   },
   {
-    id: 'designer',
+    id: 'sarah',
     name: 'Sarah Miller',
     role: 'Lead Designer',
     avatar: '👩‍🎨',
@@ -36,8 +36,8 @@ export const teamMembers: TeamMember[] = [
     officePosition: [-8, 0, 5]
   },
   {
-    id: 'marketing',
-    name: 'Jordan Park',
+    id: 'alex',
+    name: 'Alex Chen',
     role: 'Marketing Director',
     avatar: '📊',
     bio: 'Data-driven marketer focused on growth strategies. Previously at two unicorn startups. Specializes in B2B SaaS marketing and brand positioning.',
@@ -47,10 +47,27 @@ export const teamMembers: TeamMember[] = [
       'Analytics Dashboard - Marketing ROI tracking'
     ],
     contact: {
-      email: 'jordan.park@company.com',
-      slack: '@jordanp'
+      email: 'alex.chen@company.com',
+      slack: '@alexchen'
     },
     officePosition: [8, 0, 0]
+  },
+  {
+    id: 'peter',
+    name: 'Peter Rodriguez',
+    role: 'Product Manager',
+    avatar: '🚀',
+    bio: 'Strategic product leader with 6 years of experience building user-centric solutions. Former startup founder with expertise in product strategy and user research.',
+    projects: [
+      'Product Roadmap 2025 - Strategic planning',
+      'User Research Initiative - Customer insights',
+      'Feature Prioritization - Data-driven decisions'
+    ],
+    contact: {
+      email: 'peter.rodriguez@company.com',
+      slack: '@peterrodriguez'
+    },
+    officePosition: [8, 0, 10]
   }
 ];
 
