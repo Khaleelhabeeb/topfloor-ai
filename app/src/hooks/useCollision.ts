@@ -50,10 +50,14 @@ export function useCollision() {
   ], []);
 
   const doorZones = useMemo<CollisionBox[]>(() => [
-    { id: 'sarah', minX: -5.5, maxX: -4.5, minZ: -7, maxZ: -5, isDoor: true },
-    { id: 'james', minX: -5.5, maxX: -4.5, minZ: 5, maxZ: 7, isDoor: true },
-    { id: 'alex', minX: 4.5, maxX: 5.5, minZ: -7, maxZ: -5, isDoor: true },
-    { id: 'peter', minX: 4.5, maxX: 5.5, minZ: 5, maxZ: 7, isDoor: true },
+    // Sarah's office interior (top-left)
+    { id: 'sarah', minX: -14, maxX: -5, minZ: -11, maxZ: -1, isDoor: true },
+    // James's office interior (bottom-left)
+    { id: 'james', minX: -14, maxX: -5, minZ: 1, maxZ: 11, isDoor: true },
+    // Alex's office interior (top-right)
+    { id: 'alex', minX: 5, maxX: 14, minZ: -11, maxZ: -1, isDoor: true },
+    // Peter's office interior (bottom-right)
+    { id: 'peter', minX: 5, maxX: 14, minZ: 1, maxZ: 11, isDoor: true },
   ], []);
 
   const ceoChairZone = useMemo<CollisionBox>(() => ({
@@ -82,10 +86,10 @@ export function useCollision() {
   const getInsideDoor = (x: number, z: number): string | null => {
     for (const door of doorZones) {
       if (
-        x > door.minX &&
-        x < door.maxX &&
-        z > door.minZ &&
-        z < door.maxZ
+        x >= door.minX &&
+        x <= door.maxX &&
+        z >= door.minZ &&
+        z <= door.maxZ
       ) {
         return door.id;
       }

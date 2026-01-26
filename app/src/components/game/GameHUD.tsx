@@ -13,8 +13,11 @@ export function GameHUD() {
         {insideDoor && (
           <div className="bg-card/95 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-lg animate-fade-in">
             <p className="text-sm font-medium text-foreground">
-              Press <kbd className="px-2 py-0.5 bg-primary text-primary-foreground rounded text-xs mx-1">E</kbd> 
-              to start video call with {employees.find(e => e.id === insideDoor)?.name}
+              You're in {employees.find(e => e.id === insideDoor)?.name}'s office
+            </p>
+            <p className="text-xs text-muted-foreground text-center mt-1">
+              Press <kbd className="px-1.5 py-0.5 bg-primary text-primary-foreground rounded text-xs mx-1">E</kbd> 
+              to interact
             </p>
           </div>
         )}

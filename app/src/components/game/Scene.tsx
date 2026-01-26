@@ -15,10 +15,10 @@ export function Scene() {
         <Camera />
         
         {/* Lighting - warm corporate feel */}
-        <ambientLight intensity={0.4} color="#fff5e6" />
+        <ambientLight intensity={0.5} color="#fff5e6" />
         <directionalLight
           position={[10, 20, 10]}
-          intensity={0.8}
+          intensity={0.7}
           color="#fff8f0"
           castShadow
           shadow-mapSize={[2048, 2048]}
@@ -27,10 +27,11 @@ export function Scene() {
           shadow-camera-right={20}
           shadow-camera-top={20}
           shadow-camera-bottom={-20}
+          shadow-bias={-0.0001}
         />
         <directionalLight
           position={[-5, 10, -5]}
-          intensity={0.3}
+          intensity={0.4}
           color="#ffe4c4"
         />
         
@@ -41,7 +42,7 @@ export function Scene() {
         {/* Floor plane for shadows */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
           <planeGeometry args={[50, 50]} />
-          <shadowMaterial opacity={0.15} />
+          <shadowMaterial opacity={0.08} />
         </mesh>
       </Canvas>
     </div>

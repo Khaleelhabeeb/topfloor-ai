@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Text } from '@react-three/drei';
 import { employees } from '@/data/employees';
 
 // Colors matching the warm corporate theme
@@ -287,6 +288,84 @@ function Plant({ position }: { position: [number, number, number] }) {
   );
 }
 
+function OfficeNamePlate({ 
+  position, 
+  rotation = 0, 
+  name, 
+  role 
+}: { 
+  position: [number, number, number]; 
+  rotation?: number; 
+  name: string; 
+  role: string;
+}) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* Background plate - solid white */}
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[3, 1.2]} />
+        <meshStandardMaterial 
+          color="#ffffff" 
+        />
+      </mesh>
+      
+      {/* Border - darker for contrast */}
+      <mesh position={[0, 0.021, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[3.1, 1.3]} />
+        <meshStandardMaterial 
+          color="#2d3436" 
+        />
+      </mesh>
+      
+      {/* Name text - bold black */}
+      <Text
+        position={[0, 0.03, 0.25]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        fontSize={0.25}
+        color="#ffffffff"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {name}
+      </Text>
+      
+      {/* Role text - dark gray */}
+      <Text
+        position={[0, 0.03, -0.05]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        fontSize={0.15}
+        color="#ffffffff"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {role}
+      </Text>
+      
+      {/* Status indicator - bright green dot */}
+      <mesh position={[-1.2, 0.03, -0.4]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.08, 16]} />
+        <meshStandardMaterial 
+          color="#10b981" 
+          emissive="#10b981"
+          emissiveIntensity={0.8}
+        />
+      </mesh>
+      
+      {/* Status text - green */}
+      <Text
+        position={[-0.7, 0.03, -0.4]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        fontSize={0.12}
+        color="#059669"
+        anchorX="left"
+        anchorY="middle"
+      >
+        Connected
+      </Text>
+    </group>
+  );
+}
+
 export function OfficeLayout() {
   return (
     <group>
@@ -303,21 +382,45 @@ export function OfficeLayout() {
       <Desk position={[-10.5, 0, -8]} rotation={Math.PI} />
       <Chair position={[-10.5, 0, -6.5]} rotation={Math.PI} />
       <Plant position={[-13, 0, -10]} />
+      <OfficeNamePlate 
+        position={[-9.5, 0, -5]} 
+        rotation={0}
+        name="Sarah Mitchell"
+        role="Marketing Manager"
+      />
       
       {/* James's office furniture */}
       <Desk position={[-10.5, 0, 8]} />
       <Chair position={[-10.5, 0, 6.5]} />
       <Plant position={[-13, 0, 10]} />
+      <OfficeNamePlate 
+        position={[-9.5, 0, 5]} 
+        rotation={0}
+        name="James Chen"
+        role="Senior Developer"
+      />
       
       {/* Alex's office furniture */}
       <Desk position={[10.5, 0, -8]} rotation={Math.PI} />
       <Chair position={[10.5, 0, -6.5]} rotation={Math.PI} />
       <Plant position={[13, 0, -10]} />
+      <OfficeNamePlate 
+        position={[9.5, 0, -5]} 
+        rotation={0}
+        name="Alex Rivera"
+        role="UI/UX Designer"
+      />
       
       {/* Peter's office furniture */}
       <Desk position={[10.5, 0, 8]} />
       <Chair position={[10.5, 0, 6.5]} />
       <Plant position={[13, 0, 10]} />
+      <OfficeNamePlate 
+        position={[9.5, 0, 5]} 
+        rotation={0}
+        name="Peter Williams"
+        role="HR Specialist"
+      />
       
       {/* CEO Office - larger premium desk at the north end of hallway */}
       <Desk position={[0, 0, -9]} rotation={Math.PI} isPremium />
