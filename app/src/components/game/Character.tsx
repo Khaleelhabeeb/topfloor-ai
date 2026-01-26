@@ -15,8 +15,8 @@ export function Character() {
   const rotationRef = useRef(0);
   
   const keys = useKeyboard();
-  const { mode, setPlayerPosition, setNearDoor, setNearChair, enterVideoCall, enterCEODesk } = useGameState();
-  const { checkCollision, getNearDoor, isNearCEOChair } = useCollision();
+  const { mode, setPlayerPosition, setNearDoor, setInsideDoor, setNearChair, enterVideoCall, enterCEODesk, insideDoor } = useGameState();
+  const { checkCollision, getInsideDoor, getNearDoor, isNearCEOChair } = useCollision();
 
   useFrame((_, delta) => {
     if (!groupRef.current || mode !== 'exploring') return;
@@ -67,22 +67,23 @@ export function Character() {
     setPlayerPosition({ x: pos.x, z: pos.z });
     
     // Check interactions
+    const currentInsideDoor = getInsideDoor(pos.x, pos.z);
     const nearDoor = getNearDoor(pos.x, pos.z);
     setNearDoor(nearDoor);
+    setInsideDoor(currentInsideDoor);
     setNearChair(isNearCEOChair(pos.x, pos.z));
     
-    // Handle interaction key
-    if (interact) {
+    // Handle interaction key - only when inside an office
+    if (interact && currentInsideDoor) {
       keys.current.interact = false; // Prevent multiple triggers
       
-      if (nearDoor) {
-        const employee = employees.find(e => e.id === nearDoor);
-        if (employee) {
-          enterVideoCall(employee);
-        }
-      } else if (isNearCEOChair(pos.x, pos.z)) {
-        enterCEODesk();
+      const employee = employees.find(e => e.id === currentInsideDoor);
+      if (employee) {
+        enterVideoCall(employee);
       }
+    } else if (interact && isNearCEOChair(pos.x, pos.z)) {
+      keys.current.interact = false;
+      enterCEODesk();
     }
   });
 

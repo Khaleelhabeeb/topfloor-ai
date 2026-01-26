@@ -2,7 +2,7 @@ import { useGameState } from '@/hooks/useGameState';
 import { employees } from '@/data/employees';
 
 export function Minimap() {
-  const { playerPosition, nearDoor } = useGameState();
+  const { playerPosition, insideDoor } = useGameState();
   
   // Scale factor for minimap (office is roughly 30x24, minimap is 150x120)
   const scaleX = 150 / 30;
@@ -98,11 +98,11 @@ export function Minimap() {
         }}
       />
       
-      {/* Door highlights */}
-      {nearDoor && (
+      {/* Inside office indicator */}
+      {insideDoor && (
         <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
           <span className="text-[7px] text-primary font-medium bg-primary/10 px-1 rounded">
-            Near: {employees.find(e => e.id === nearDoor)?.name.split(' ')[0]}
+            In: {employees.find(e => e.id === insideDoor)?.name.split(' ')[0]}'s Office
           </span>
         </div>
       )}

@@ -86,8 +86,13 @@ function Walls() {
         <boxGeometry args={[9, wallHeight, wallThickness]} />
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
-      <mesh position={[-5, wallHeight / 2, -6]} castShadow receiveShadow>
-        <boxGeometry args={[wallThickness, wallHeight, 10]} />
+      {/* Sarah's wall with door cutout - split into two parts */}
+      <mesh position={[-5, wallHeight / 2, -8.5]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, 3]} />
+        <meshStandardMaterial color={COLORS.wall} />
+      </mesh>
+      <mesh position={[-5, wallHeight / 2, -3.5]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, 3]} />
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
       
@@ -96,8 +101,13 @@ function Walls() {
         <boxGeometry args={[9, wallHeight, wallThickness]} />
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
-      <mesh position={[-5, wallHeight / 2, 6]} castShadow receiveShadow>
-        <boxGeometry args={[wallThickness, wallHeight, 10]} />
+      {/* James's wall with door cutout - split into two parts */}
+      <mesh position={[-5, wallHeight / 2, 3.5]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, 3]} />
+        <meshStandardMaterial color={COLORS.wall} />
+      </mesh>
+      <mesh position={[-5, wallHeight / 2, 8.5]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, 3]} />
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
       
@@ -106,8 +116,13 @@ function Walls() {
         <boxGeometry args={[9, wallHeight, wallThickness]} />
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
-      <mesh position={[5, wallHeight / 2, -6]} castShadow receiveShadow>
-        <boxGeometry args={[wallThickness, wallHeight, 10]} />
+      {/* Alex's wall with door cutout - split into two parts */}
+      <mesh position={[5, wallHeight / 2, -8.5]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, 3]} />
+        <meshStandardMaterial color={COLORS.wall} />
+      </mesh>
+      <mesh position={[5, wallHeight / 2, -3.5]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, 3]} />
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
       
@@ -116,38 +131,55 @@ function Walls() {
         <boxGeometry args={[9, wallHeight, wallThickness]} />
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
-      <mesh position={[5, wallHeight / 2, 6]} castShadow receiveShadow>
-        <boxGeometry args={[wallThickness, wallHeight, 10]} />
+      {/* Peter's wall with door cutout - split into two parts */}
+      <mesh position={[5, wallHeight / 2, 3.5]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, 3]} />
+        <meshStandardMaterial color={COLORS.wall} />
+      </mesh>
+      <mesh position={[5, wallHeight / 2, 8.5]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, 3]} />
         <meshStandardMaterial color={COLORS.wall} />
       </mesh>
     </group>
   );
 }
 
-function Door({ position, label }: { position: [number, number, number]; label: string }) {
+function Door({ position, label, rotation = 0 }: { position: [number, number, number]; label: string; rotation?: number }) {
   return (
-    <group position={position}>
-      {/* Door frame */}
-      <mesh position={[0, 1.25, 0]} castShadow>
-        <boxGeometry args={[1.2, 2.5, 0.15]} />
+    <group position={position} rotation={[0, rotation, 0]}>
+      {/* Door frame - left side */}
+      <mesh position={[-0.55, 1.25, 0]} castShadow>
+        <boxGeometry args={[0.1, 2.5, 0.15]} />
         <meshStandardMaterial color={COLORS.doorFrame} />
       </mesh>
       
-      {/* Door */}
-      <mesh position={[0, 1.15, 0.1]} castShadow>
-        <boxGeometry args={[0.9, 2.2, 0.1]} />
+      {/* Door frame - right side */}
+      <mesh position={[0.55, 1.25, 0]} castShadow>
+        <boxGeometry args={[0.1, 2.5, 0.15]} />
+        <meshStandardMaterial color={COLORS.doorFrame} />
+      </mesh>
+      
+      {/* Door frame - top */}
+      <mesh position={[0, 2.5, 0]} castShadow>
+        <boxGeometry args={[1.2, 0.1, 0.15]} />
+        <meshStandardMaterial color={COLORS.doorFrame} />
+      </mesh>
+      
+      {/* Open door - swung to the side */}
+      <mesh position={[-0.95, 1.15, 0.4]} rotation={[0, Math.PI / 2.5, 0]} castShadow>
+        <boxGeometry args={[0.9, 2.2, 0.08]} />
         <meshStandardMaterial color={COLORS.door} />
       </mesh>
       
-      {/* Door handle */}
-      <mesh position={[0.3, 1.1, 0.2]} castShadow>
-        <boxGeometry args={[0.15, 0.05, 0.1]} />
+      {/* Door handle on open door */}
+      <mesh position={[-0.95, 1.1, 0.65]} castShadow>
+        <boxGeometry args={[0.05, 0.05, 0.12]} />
         <meshStandardMaterial color="#c0a060" metalness={0.8} roughness={0.2} />
       </mesh>
       
-      {/* Name plate */}
-      <mesh position={[0, 2.1, 0.2]} castShadow>
-        <boxGeometry args={[0.8, 0.25, 0.05]} />
+      {/* Name plate above door */}
+      <mesh position={[0, 2.65, 0.08]} castShadow>
+        <boxGeometry args={[0.8, 0.2, 0.05]} />
         <meshStandardMaterial color="#2d3436" />
       </mesh>
     </group>
@@ -261,11 +293,11 @@ export function OfficeLayout() {
       <Floor />
       <Walls />
       
-      {/* Doors with labels */}
-      <Door position={[-5, 0, -2.25]} label="Sarah" />
-      <Door position={[-5, 0, 2.25]} label="James" />
-      <Door position={[5, 0, -2.25]} label="Alex" />
-      <Door position={[5, 0, 2.25]} label="Peter" />
+      {/* Doors with labels - positioned in the doorway cutouts */}
+      <Door position={[-5, 0, -6]} label="Sarah" rotation={Math.PI / 2} />
+      <Door position={[-5, 0, 6]} label="James" rotation={Math.PI / 2} />
+      <Door position={[5, 0, -6]} label="Alex" rotation={-Math.PI / 2} />
+      <Door position={[5, 0, 6]} label="Peter" rotation={-Math.PI / 2} />
       
       {/* Sarah's office furniture */}
       <Desk position={[-10.5, 0, -8]} rotation={Math.PI} />

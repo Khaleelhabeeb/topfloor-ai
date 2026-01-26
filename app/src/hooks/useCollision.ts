@@ -21,19 +21,23 @@ export function useCollision() {
     
     // Sarah's office walls (top-left)
     { id: 'sarah-wall-south', minX: -14, maxX: -5, minZ: -1.5, maxZ: -0.5 },
-    { id: 'sarah-wall-east', minX: -5.5, maxX: -4.5, minZ: -11, maxZ: -3 },
+    { id: 'sarah-wall-east-top', minX: -5.5, maxX: -4.5, minZ: -11, maxZ: -7 },
+    { id: 'sarah-wall-east-bottom', minX: -5.5, maxX: -4.5, minZ: -5, maxZ: -1 },
     
     // James's office walls (bottom-left)
     { id: 'james-wall-north', minX: -14, maxX: -5, minZ: 0.5, maxZ: 1.5 },
-    { id: 'james-wall-east', minX: -5.5, maxX: -4.5, minZ: 3, maxZ: 11 },
+    { id: 'james-wall-east-top', minX: -5.5, maxX: -4.5, minZ: 1, maxZ: 5 },
+    { id: 'james-wall-east-bottom', minX: -5.5, maxX: -4.5, minZ: 7, maxZ: 11 },
     
     // Alex's office walls (top-right)
     { id: 'alex-wall-south', minX: 5, maxX: 14, minZ: -1.5, maxZ: -0.5 },
-    { id: 'alex-wall-west', minX: 4.5, maxX: 5.5, minZ: -11, maxZ: -3 },
+    { id: 'alex-wall-west-top', minX: 4.5, maxX: 5.5, minZ: -11, maxZ: -7 },
+    { id: 'alex-wall-west-bottom', minX: 4.5, maxX: 5.5, minZ: -5, maxZ: -1 },
     
     // Peter's office walls (bottom-right)
     { id: 'peter-wall-north', minX: 5, maxX: 14, minZ: 0.5, maxZ: 1.5 },
-    { id: 'peter-wall-west', minX: 4.5, maxX: 5.5, minZ: 3, maxZ: 11 },
+    { id: 'peter-wall-west-top', minX: 4.5, maxX: 5.5, minZ: 1, maxZ: 5 },
+    { id: 'peter-wall-west-bottom', minX: 4.5, maxX: 5.5, minZ: 7, maxZ: 11 },
     
     // Office furniture (simplified)
     { id: 'sarah-desk', minX: -12, maxX: -9, minZ: -9, maxZ: -7 },
@@ -46,10 +50,10 @@ export function useCollision() {
   ], []);
 
   const doorZones = useMemo<CollisionBox[]>(() => [
-    { id: 'sarah', minX: -5.5, maxX: -4.5, minZ: -3, maxZ: -1.5, isDoor: true },
-    { id: 'james', minX: -5.5, maxX: -4.5, minZ: 1.5, maxZ: 3, isDoor: true },
-    { id: 'alex', minX: 4.5, maxX: 5.5, minZ: -3, maxZ: -1.5, isDoor: true },
-    { id: 'peter', minX: 4.5, maxX: 5.5, minZ: 1.5, maxZ: 3, isDoor: true },
+    { id: 'sarah', minX: -5.5, maxX: -4.5, minZ: -7, maxZ: -5, isDoor: true },
+    { id: 'james', minX: -5.5, maxX: -4.5, minZ: 5, maxZ: 7, isDoor: true },
+    { id: 'alex', minX: 4.5, maxX: 5.5, minZ: -7, maxZ: -5, isDoor: true },
+    { id: 'peter', minX: 4.5, maxX: 5.5, minZ: 5, maxZ: 7, isDoor: true },
   ], []);
 
   const ceoChairZone = useMemo<CollisionBox>(() => ({
@@ -73,6 +77,20 @@ export function useCollision() {
       }
     }
     return false;
+  };
+
+  const getInsideDoor = (x: number, z: number): string | null => {
+    for (const door of doorZones) {
+      if (
+        x > door.minX &&
+        x < door.maxX &&
+        z > door.minZ &&
+        z < door.maxZ
+      ) {
+        return door.id;
+      }
+    }
+    return null;
   };
 
   const getNearDoor = (x: number, z: number): string | null => {
@@ -103,6 +121,7 @@ export function useCollision() {
     doorZones,
     ceoChairZone,
     checkCollision,
+    getInsideDoor,
     getNearDoor,
     isNearCEOChair,
   };

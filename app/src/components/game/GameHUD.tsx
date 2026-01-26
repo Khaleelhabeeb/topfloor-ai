@@ -2,7 +2,7 @@ import { useGameState } from '@/hooks/useGameState';
 import { employees } from '@/data/employees';
 
 export function GameHUD() {
-  const { nearDoor, nearChair, mode } = useGameState();
+  const { insideDoor, nearChair, mode } = useGameState();
 
   if (mode !== 'exploring') return null;
 
@@ -10,16 +10,16 @@ export function GameHUD() {
     <div className="absolute inset-0 pointer-events-none">
       {/* Interaction prompts */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-        {nearDoor && (
+        {insideDoor && (
           <div className="bg-card/95 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-lg animate-fade-in">
             <p className="text-sm font-medium text-foreground">
               Press <kbd className="px-2 py-0.5 bg-primary text-primary-foreground rounded text-xs mx-1">E</kbd> 
-              to enter {employees.find(e => e.id === nearDoor)?.name}'s office
+              to start video call with {employees.find(e => e.id === insideDoor)?.name}
             </p>
           </div>
         )}
         
-        {nearChair && !nearDoor && (
+        {nearChair && !insideDoor && (
           <div className="bg-card/95 backdrop-blur-sm px-4 py-2 rounded-lg border border-border shadow-lg animate-fade-in">
             <p className="text-sm font-medium text-foreground">
               Press <kbd className="px-2 py-0.5 bg-primary text-primary-foreground rounded text-xs mx-1">E</kbd> 
