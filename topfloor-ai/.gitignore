@@ -1,0 +1,37 @@
+.kiro
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and editor files
+.vscode/
+.idea/
+.DS_Store
+
+# Virtual environments
+.venv/
+venv/
+env/
+/env/
+/venv/
+.virtualenv/
+.virtualenvs/
+.tox/
+
+# Test and coverage artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Jupyter notebooks
+.ipynb_checkpoints
+
+# OS-specific files
+Thumbs.db
+
+# Private or sensitive data
+*.env
+
+storage/users
+storage/lab_results
