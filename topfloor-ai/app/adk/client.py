@@ -5,8 +5,8 @@ ADK Client - Wrapper for Google Agent Development Kit initialization
 import os
 from typing import Optional
 from google.adk.agents import LlmAgent
-from google.adk.sessions import InMemorySessionService, SessionService
-from google.adk.artifacts import InMemoryArtifactService, ArtifactService
+from google.adk.sessions import InMemorySessionService, BaseSessionService
+from google.adk.artifacts import InMemoryArtifactService, BaseArtifactService
 from google.adk.runners import Runner
 
 
@@ -17,8 +17,8 @@ class ADKClient:
     """
     
     _instance: Optional['ADKClient'] = None
-    _session_service: Optional[SessionService] = None
-    _artifact_service: Optional[ArtifactService] = None
+    _session_service: Optional[BaseSessionService] = None
+    _artifact_service: Optional[BaseArtifactService] = None
     
     def __new__(cls):
         if cls._instance is None:
@@ -39,12 +39,12 @@ class ADKClient:
         self._artifact_service = InMemoryArtifactService()
     
     @property
-    def session_service(self) -> SessionService:
+    def session_service(self) -> BaseSessionService:
         """Get session service instance"""
         return self._session_service
     
     @property
-    def artifact_service(self) -> ArtifactService:
+    def artifact_service(self) -> BaseArtifactService:
         """Get artifact service instance"""
         return self._artifact_service
     
