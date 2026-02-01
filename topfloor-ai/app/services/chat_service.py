@@ -8,7 +8,7 @@ from sqlalchemy import desc, and_
 from app.models.chat_message import ChatMessage, MessageRole
 from app.schemas.chat_message import ChatMessageCreate
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 
@@ -44,7 +44,7 @@ class ChatService:
             role=message_data.role,
             content=message_data.content,
             message_metadata=message_data.metadata,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         self.db.add(db_message)
