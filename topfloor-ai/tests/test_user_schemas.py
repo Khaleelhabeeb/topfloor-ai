@@ -9,14 +9,14 @@ class TestUserCreate:
     
     def test_valid_user_create(self):
         """Test that valid email and password are accepted."""
-        user = UserCreate(email="test@example.com", password="password123")
+        user = UserCreate(email="test@example.com", password="Password123!")
         assert user.email == "test@example.com"
-        assert user.password == "password123"
+        assert user.password == "Password123!"
     
     def test_invalid_email_format(self):
         """Test that invalid email format is rejected."""
         with pytest.raises(ValidationError) as exc_info:
-            UserCreate(email="not-an-email", password="password123")
+            UserCreate(email="not-an-email", password="Password123!")
         
         errors = exc_info.value.errors()
         assert any(error['type'] == 'value_error' for error in errors)
@@ -33,9 +33,10 @@ class TestUserCreate:
         assert any('min_length' in str(error) for error in errors)
     
     def test_password_exactly_8_characters(self):
-        """Test that password with exactly 8 characters is accepted."""
-        user = UserCreate(email="test@example.com", password="12345678")
-        assert user.password == "12345678"
+        """Test that password with exactly 8 characters is rejected if it doesn't meet complexity requirements."""
+        with pytest.raises(ValidationError) as exc_info:
+            UserCreate(email="test@example.com", password="12345678")
+        assert "Password must contain at least one uppercase letter" in str(exc_info.value)
     
     def test_missing_email(self):
         """Test that missing email is rejected."""
