@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Employee, CEOFolder } from '@/data/employees';
 
 export type GameMode = 'exploring' | 'video-call' | 'ceo-desk' | 'folder-view';
+export type VideoCallMode = 'interface' | 'live-call';
 
 interface ChatMessage {
   sender: string;
@@ -12,6 +13,7 @@ interface ChatMessage {
 
 interface GameState {
   mode: GameMode;
+  videoCallMode: VideoCallMode;
   currentEmployee: Employee | null;
   currentFolder: CEOFolder | null;
   chatMessages: Record<string, ChatMessage[]>;
@@ -23,6 +25,7 @@ interface GameState {
   
   // Actions
   setMode: (mode: GameMode) => void;
+  setVideoCallMode: (mode: VideoCallMode) => void;
   enterVideoCall: (employee: Employee) => void;
   exitVideoCall: () => void;
   enterCEODesk: () => void;
@@ -39,6 +42,7 @@ interface GameState {
 
 export const useGameState = create<GameState>((set, get) => ({
   mode: 'exploring',
+  videoCallMode: 'interface',
   currentEmployee: null,
   currentFolder: null,
   chatMessages: {},
@@ -49,11 +53,13 @@ export const useGameState = create<GameState>((set, get) => ({
   isSeated: false,
 
   setMode: (mode) => set({ mode }),
+  setVideoCallMode: (videoCallMode) => set({ videoCallMode }),
 
   enterVideoCall: (employee) => {
     const currentMessages = get().chatMessages[employee.id] || [...employee.initialMessages];
     set({
       mode: 'video-call',
+      videoCallMode: 'interface',
       currentEmployee: employee,
       chatMessages: {
         ...get().chatMessages,
@@ -64,6 +70,7 @@ export const useGameState = create<GameState>((set, get) => ({
 
   exitVideoCall: () => set({
     mode: 'exploring',
+    videoCallMode: 'interface',
     currentEmployee: null,
   }),
 

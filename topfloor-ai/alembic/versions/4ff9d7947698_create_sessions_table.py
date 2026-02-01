@@ -51,4 +51,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_sessions_id'), table_name='sessions')
     op.drop_index(op.f('ix_sessions_agent_type'), table_name='sessions')
     op.drop_table('sessions')
+    
+    # Drop ENUM type (PostgreSQL specific)
+    sa.Enum(name='session_status').drop(op.get_bind(), checkfirst=True)
     # ### end Alembic commands ###

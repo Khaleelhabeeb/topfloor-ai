@@ -5,6 +5,7 @@ ADK module - Google Agent Development Kit integration
 from app.adk.client import ADKClient, adk_client
 from app.adk.sessions import SessionManager, session_manager
 from app.adk.memory import MemoryStrategy, MemoryScope
+from app.adk.runner import AgentRunner
 
 __all__ = [
     "ADKClient",
@@ -13,4 +14,5 @@ __all__ = [
     "session_manager",
     "MemoryStrategy",
     "MemoryScope",
+    "AgentRunner",
 ]

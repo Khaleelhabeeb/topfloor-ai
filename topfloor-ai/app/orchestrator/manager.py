@@ -6,10 +6,10 @@ from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session as DBSession
 
 from google.adk.agents import LlmAgent
-from google.adk.runners import Runner
 
 from app.agents import AgentFactory, AgentType
 from app.adk import adk_client, session_manager, MemoryStrategy
+from app.adk.runner import AgentRunner
 from app.models.session import Session as DBSessionModel
 
 
@@ -70,7 +70,7 @@ class OrchestratorManager:
         user_id: int,
         session_id: Optional[str] = None,
         agent_type: str = "orchestrator"
-    ) -> tuple[Runner, DBSessionModel]:
+    ) -> tuple[AgentRunner, DBSessionModel]:
         """
         Create a runner for executing agent workflows.
         
@@ -81,12 +81,12 @@ class OrchestratorManager:
             agent_type: Agent type (default: orchestrator)
             
         Returns:
-            Tuple of (Runner, database session)
+            Tuple of (AgentRunner, database session)
         """
         # Get or create orchestrator
         orchestrator = self.get_or_create_orchestrator(user_id)
         
-        # Get or create session
+        # Get or create database session
         if session_id:
             # Resume existing session
             result = session_manager.get_or_create_adk_session(
@@ -98,7 +98,7 @@ class OrchestratorManager:
                 raise ValueError(f"Session {session_id} not found or not active")
             db_session, adk_session = result
         else:
-            # Create new session
+            # Create new database session
             db_session, adk_session = session_manager.create_session(
                 db=db,
                 user_id=user_id,
@@ -114,9 +114,12 @@ class OrchestratorManager:
                 agent_type=agent_type
             )
         
-        # Create runner
-        runner = adk_client.create_runner(
+        # Create agent runner
+        # Use a simple session_id that ADK will auto-create
+        runner = AgentRunner(
             agent=orchestrator,
+            session_id=db_session.session_id,
+            user_id=user_id,
             app_name="topfloor-ai"
         )
         

@@ -2,7 +2,7 @@
 Session Model - Tracks agent conversations and their lifecycle
 """
 
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum as SQLEnum, Text
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum as SQLEnum, Text, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -63,6 +63,16 @@ class Session(Base):
     
     # Relationships
     user = relationship("User", back_populates="sessions")
+    
+    # Composite indexes for common query patterns
+    __table_args__ = (
+        # Index for querying sessions by user and agent (user's agent-specific sessions)
+        Index('idx_session_user_agent', 'user_id', 'agent_type'),
+        # Index for querying sessions by user and status (active sessions)
+        Index('idx_session_user_status', 'user_id', 'status'),
+        # Index for time-based queries (recent sessions)
+        Index('idx_session_created_at', 'created_at'),
+    )
     
     def __repr__(self) -> str:
         return f"<Session(id={self.id}, session_id={self.session_id}, user_id={self.user_id}, agent_type={self.agent_type}, status={self.status})>"
