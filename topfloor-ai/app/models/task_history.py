@@ -2,12 +2,16 @@
 TaskHistory Model - Tracks status changes and events for tasks
 """
 
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Index
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, Index, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from app.db.base import Base
+
+
+# Use JSON type with JSONB for PostgreSQL (falls back to JSON for SQLite)
+JSONType = JSON().with_variant(JSONB(), 'postgresql')
 
 
 class TaskHistory(Base):
@@ -45,7 +49,7 @@ class TaskHistory(Base):
     message = Column(Text, nullable=True)
     
     # Additional metadata (using 'event_metadata' to avoid SQLAlchemy reserved name)
-    event_metadata = Column("metadata", JSONB, nullable=True)
+    event_metadata = Column("metadata", JSONType, nullable=True)
     
     # Timestamp
     created_at = Column(

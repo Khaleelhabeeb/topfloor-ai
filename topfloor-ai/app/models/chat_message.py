@@ -2,13 +2,17 @@
 ChatMessage Model - Stores conversation messages between users and agents
 """
 
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum as SQLEnum, Text, Index
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum as SQLEnum, Text, Index, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
 
 from app.db.base import Base
+
+
+# Use JSON type with JSONB for PostgreSQL (falls back to JSON for SQLite)
+JSONType = JSON().with_variant(JSONB(), 'postgresql')
 
 
 class MessageRole(str, enum.Enum):
@@ -63,7 +67,7 @@ class ChatMessage(Base):
     
     # Metadata for extensions (e.g., attachments, formatting, tool calls)
     # Note: Using 'message_metadata' instead of 'metadata' as 'metadata' is reserved by SQLAlchemy
-    message_metadata = Column(JSONB, nullable=True)
+    message_metadata = Column(JSONType, nullable=True)
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)

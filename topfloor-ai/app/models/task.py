@@ -2,13 +2,17 @@
 Task Model - Tracks user tasks assigned to agents
 """
 
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum as SQLEnum, Text, Index
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Enum as SQLEnum, Text, Index, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
 
 from app.db.base import Base
+
+
+# Use JSON type with JSONB for PostgreSQL (falls back to JSON for SQLite)
+JSONType = JSON().with_variant(JSONB(), 'postgresql')
 
 
 class TaskType(str, enum.Enum):
@@ -93,8 +97,8 @@ class Task(Base):
     )
     
     # Task data
-    input_data = Column(JSONB, nullable=True)
-    result_data = Column(JSONB, nullable=True)
+    input_data = Column(JSONType, nullable=True)
+    result_data = Column(JSONType, nullable=True)
     
     # Error tracking
     error_message = Column(Text, nullable=True)

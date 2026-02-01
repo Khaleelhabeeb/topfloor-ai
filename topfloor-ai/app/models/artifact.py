@@ -2,12 +2,16 @@
 Artifact Model - Tracks generated files and documents
 """
 
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, BigInteger, Index
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Text, BigInteger, Index, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from app.db.base import Base
+
+
+# Use JSON type with JSONB for PostgreSQL (falls back to JSON for SQLite)
+JSONType = JSON().with_variant(JSONB(), 'postgresql')
 
 
 class Artifact(Base):
@@ -53,7 +57,7 @@ class Artifact(Base):
     mime_type = Column(String(100), nullable=True)  # MIME type for proper serving
     
     # Metadata
-    meta_data = Column(JSONB, nullable=True)  # Additional metadata (dimensions, pages, etc)
+    meta_data = Column(JSONType, nullable=True)  # Additional metadata (dimensions, pages, etc)
     
     # Lifecycle timestamps
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
