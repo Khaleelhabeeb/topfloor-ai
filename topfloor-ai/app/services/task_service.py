@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_, or_, desc
 from app.models.task import Task, TaskStatus, TaskPriority, TaskType
+from app.models.task_history import TaskHistory
 from app.schemas.task import TaskCreate, TaskUpdate
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -46,10 +47,24 @@ class TaskService:
             priority=task_data.priority,
             status=TaskStatus.PENDING,
             input_data=task_data.input_data,
+            progress=task_data.progress,
+            due_date=task_data.due_date,
         )
         
         self.db.add(db_task)
         try:
+            self.db.flush()
+            self._add_history(
+                task_id=db_task.id,
+                status=db_task.status.value,
+                message="Task created",
+                metadata={
+                    "action_type": "task_assigned",
+                    "task_id": db_task.task_id,
+                    "agent_type": db_task.agent_type,
+                    "priority": db_task.priority.value,
+                }
+            )
             self.db.commit()
             self.db.refresh(db_task)
             return db_task
@@ -100,11 +115,13 @@ class TaskService:
         status: Optional[TaskStatus] = None,
         task_type: Optional[TaskType] = None,
         priority: Optional[TaskPriority] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
         skip: int = 0,
         limit: int = 100
     ) -> tuple[List[Task], int]:
         """
-        Get a list of tasks with optional filtering and pagination.
+        Get a list of tasks with optional filtering, sorting, and pagination.
         
         Args:
             user_id: User ID to filter tasks
@@ -112,6 +129,8 @@ class TaskService:
             status: Optional status filter
             task_type: Optional task type filter
             priority: Optional priority filter
+            sort_by: Field to sort by (created_at, updated_at, priority, status, title)
+            sort_order: Sort order (asc or desc)
             skip: Number of records to skip (for pagination)
             limit: Maximum number of records to return
             
@@ -137,8 +156,15 @@ class TaskService:
         # Get total count before pagination
         total = query.count()
         
-        # Apply pagination and ordering
-        tasks = query.order_by(desc(Task.created_at)).offset(skip).limit(limit).all()
+        # Apply sorting
+        sort_column = getattr(Task, sort_by, Task.created_at)
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        # Apply pagination
+        tasks = query.offset(skip).limit(limit).all()
         
         return tasks, total
     
@@ -169,6 +195,10 @@ class TaskService:
             return None
         
         # Update fields
+        previous_status = task.status
+        previous_priority = task.priority
+        previous_progress = task.progress
+        previous_due_date = task.due_date
         update_data = task_update.model_dump(exclude_unset=True)
         
         for field, value in update_data.items():
@@ -185,6 +215,37 @@ class TaskService:
                 if task.completed_at is None:
                     task.completed_at = datetime.utcnow()
         
+        action_type = "task_updated"
+        if "status" in update_data and task.status != previous_status:
+            if task.status == TaskStatus.COMPLETED:
+                action_type = "task_completed"
+            elif task.status == TaskStatus.CANCELLED:
+                action_type = "task_cancelled"
+
+        history_message = "Task updated"
+        if action_type == "task_completed":
+            history_message = "Task completed"
+        elif action_type == "task_cancelled":
+            history_message = "Task cancelled"
+
+        self._add_history(
+            task_id=task.id,
+            status=task.status.value,
+            message=history_message,
+            metadata={
+                "action_type": action_type,
+                "task_id": task.task_id,
+                "agent_type": task.agent_type,
+                "previous": {
+                    "status": previous_status.value,
+                    "priority": previous_priority.value,
+                    "progress": previous_progress,
+                    "due_date": previous_due_date.isoformat() if previous_due_date else None,
+                },
+                "updates": update_data,
+            }
+        )
+
         try:
             self.db.commit()
             self.db.refresh(task)
@@ -213,6 +274,21 @@ class TaskService:
         self.db.commit()
         
         return True
+
+    def _add_history(
+        self,
+        task_id: int,
+        status: str,
+        message: str,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
+        history = TaskHistory(
+            task_id=task_id,
+            status=status,
+            message=message,
+            event_metadata=metadata
+        )
+        self.db.add(history)
     
     def update_task_status(
         self,
@@ -261,6 +337,8 @@ class TaskService:
         user_id: int,
         agent_type: str,
         status: Optional[TaskStatus] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
         skip: int = 0,
         limit: int = 100
     ) -> tuple[List[Task], int]:
@@ -271,6 +349,8 @@ class TaskService:
             user_id: User ID to filter tasks
             agent_type: Agent type to filter
             status: Optional status filter
+            sort_by: Field to sort by
+            sort_order: Sort order (asc or desc)
             skip: Number of records to skip
             limit: Maximum number of records to return
             
@@ -281,6 +361,8 @@ class TaskService:
             user_id=user_id,
             agent_type=agent_type,
             status=status,
+            sort_by=sort_by,
+            sort_order=sort_order,
             skip=skip,
             limit=limit
         )

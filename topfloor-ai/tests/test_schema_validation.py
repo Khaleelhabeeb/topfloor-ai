@@ -8,7 +8,6 @@ import pytest
 from pydantic import ValidationError
 from app.schemas.task import TaskCreate, TaskUpdate, TaskPriority, TaskType
 from app.schemas.chat_message import ChatMessageCreate, MessageRole
-from app.schemas.artifact import ArtifactCreate
 from app.schemas.session import SessionCreate, SessionUpdate
 from app.schemas.user import UserCreate
 
@@ -100,104 +99,6 @@ class TestAgentTypeValidation:
             )
             assert message.agent_type == agent
     
-    def test_artifact_invalid_agent_type(self):
-        """Test that invalid agent type in artifact is rejected."""
-        with pytest.raises(ValidationError) as exc_info:
-            ArtifactCreate(
-                agent_type="INVALID",
-                file_name="test.pdf",
-                file_type="pdf",
-                file_path="/storage/test.pdf",
-                file_size=1024
-            )
-        assert "lowercase letters and underscores" in str(exc_info.value)
-
-
-class TestFileValidation:
-    """Test file-related validation in artifact schemas."""
-    
-    def test_file_name_path_traversal(self):
-        """Test that path traversal in file name is rejected."""
-        with pytest.raises(ValidationError) as exc_info:
-            ArtifactCreate(
-                agent_type="finance",
-                file_name="../../../etc/passwd",
-                file_type="pdf",
-                file_path="/storage/test.pdf",
-                file_size=1024
-            )
-        assert "path traversal" in str(exc_info.value)
-    
-    def test_file_name_invalid_characters(self):
-        """Test that invalid characters in file name are rejected."""
-        with pytest.raises(ValidationError) as exc_info:
-            ArtifactCreate(
-                agent_type="finance",
-                file_name="test<script>.pdf",
-                file_type="pdf",
-                file_path="/storage/test.pdf",
-                file_size=1024
-            )
-        assert "invalid characters" in str(exc_info.value)
-    
-    def test_file_type_not_allowed(self):
-        """Test that disallowed file types are rejected."""
-        with pytest.raises(ValidationError) as exc_info:
-            ArtifactCreate(
-                agent_type="finance",
-                file_name="malware.exe",
-                file_type="exe",
-                file_path="/storage/malware.exe",
-                file_size=1024
-            )
-        assert "not allowed" in str(exc_info.value)
-    
-    def test_file_size_exceeds_limit(self):
-        """Test that files over 100MB are rejected."""
-        with pytest.raises(ValidationError) as exc_info:
-            ArtifactCreate(
-                agent_type="finance",
-                file_name="huge.pdf",
-                file_type="pdf",
-                file_path="/storage/huge.pdf",
-                file_size=200_000_000  # 200MB
-            )
-        assert "less than or equal to 100000000" in str(exc_info.value)
-    
-    def test_mime_type_invalid_format(self):
-        """Test that invalid MIME type format is rejected."""
-        with pytest.raises(ValidationError) as exc_info:
-            ArtifactCreate(
-                agent_type="finance",
-                file_name="test.pdf",
-                file_type="pdf",
-                file_path="/storage/test.pdf",
-                file_size=1024,
-                mime_type="not-a-mime-type"
-            )
-        assert "Invalid MIME type format" in str(exc_info.value)
-    
-    def test_valid_mime_types(self):
-        """Test that valid MIME types are accepted."""
-        valid_mimes = [
-            "application/pdf",
-            "image/png",
-            "text/plain",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        ]
-        
-        for mime in valid_mimes:
-            artifact = ArtifactCreate(
-                agent_type="finance",
-                file_name="test.pdf",
-                file_type="pdf",
-                file_path="/storage/test.pdf",
-                file_size=1024,
-                mime_type=mime
-            )
-            assert artifact.mime_type == mime.lower()
-
-
 class TestPasswordValidation:
     """Test password strength validation."""
     
@@ -292,19 +193,6 @@ class TestDataSizeValidation:
             )
         assert "exceeds maximum size" in str(exc_info.value)
     
-    def test_artifact_metadata_too_large(self):
-        """Test that artifact metadata over 50KB is rejected."""
-        large_metadata = {"data": "x" * 50001}
-        with pytest.raises(ValidationError) as exc_info:
-            ArtifactCreate(
-                agent_type="finance",
-                file_name="test.pdf",
-                file_type="pdf",
-                file_path="/storage/test.pdf",
-                file_size=1024,
-                metadata=large_metadata
-            )
-        assert "exceeds maximum size" in str(exc_info.value)
 
 
 class TestInputSanitization:
@@ -327,17 +215,6 @@ class TestInputSanitization:
             content="  Hello World  "
         )
         assert message.content == "Hello World"
-    
-    def test_artifact_file_name_whitespace_stripped(self):
-        """Test that whitespace is stripped from file name."""
-        artifact = ArtifactCreate(
-            agent_type="finance",
-            file_name="  test.pdf  ",
-            file_type="pdf",
-            file_path="/storage/test.pdf",
-            file_size=1024
-        )
-        assert artifact.file_name == "test.pdf"
     
     def test_session_agent_name_whitespace_stripped(self):
         """Test that whitespace is stripped from agent name."""

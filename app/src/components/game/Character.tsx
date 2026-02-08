@@ -15,8 +15,8 @@ export function Character() {
   const rotationRef = useRef(0);
   
   const keys = useKeyboard();
-  const { mode, setPlayerPosition, setNearDoor, setInsideDoor, setNearChair, enterVideoCall, enterCEODesk, insideDoor } = useGameState();
-  const { checkCollision, getInsideDoor, getNearDoor, isNearCEOChair } = useCollision();
+  const { mode, setPlayerPosition, setInsideDoor, setNearChair, enterVideoCall, enterCEODesk } = useGameState();
+  const { checkCollision, getInsideDoor, isNearCEOChair } = useCollision();
 
   useFrame((_, delta) => {
     if (!groupRef.current || mode !== 'exploring') return;
@@ -68,8 +68,6 @@ export function Character() {
     
     // Check interactions
     const currentInsideDoor = getInsideDoor(pos.x, pos.z);
-    const nearDoor = getNearDoor(pos.x, pos.z);
-    setNearDoor(nearDoor);
     setInsideDoor(currentInsideDoor);
     setNearChair(isNearCEOChair(pos.x, pos.z));
     

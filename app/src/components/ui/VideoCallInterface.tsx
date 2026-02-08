@@ -102,7 +102,7 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
                 <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
                   <AvatarImage src={currentEmployee.avatar} alt={currentEmployee.name} />
                   <AvatarFallback className="text-3xl">
-                    {currentEmployee.name.split(' ').map(n => n[0]).join('')}
+                    {currentEmployee.name[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="mt-4 text-center">

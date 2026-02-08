@@ -35,3 +35,19 @@ Thumbs.db
 
 storage/users
 storage/lab_results
+storage/artifacts/*
+!storage/artifacts/.gitkeep
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Redis
+dump.rdb
+
+API.md
+test_all_api_endpoints.sh
+test_migrations_manual.sh
+
+adk_guide.txt
+adk-components-mapping.md

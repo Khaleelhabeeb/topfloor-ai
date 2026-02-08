@@ -18,7 +18,7 @@ class TestAgentFactory:
         assert AgentType.ORCHESTRATOR in agent_types
         assert AgentType.TEAM_LEAD in agent_types
         assert AgentType.RESEARCHER in agent_types
-        assert AgentType.DEVELOPER in agent_types
+        assert AgentType.FINANCE in agent_types
         assert AgentType.DATA_ANALYST in agent_types
     
     def test_validate_agent_type(self):
@@ -26,7 +26,7 @@ class TestAgentFactory:
         assert AgentFactory.validate_agent_type("orchestrator") is True
         assert AgentFactory.validate_agent_type("team_lead") is True
         assert AgentFactory.validate_agent_type("researcher") is True
-        assert AgentFactory.validate_agent_type("developer") is True
+        assert AgentFactory.validate_agent_type("finance") is True
         assert AgentFactory.validate_agent_type("data_analyst") is True
         assert AgentFactory.validate_agent_type("invalid_type") is False
     
@@ -49,13 +49,13 @@ class TestAgentFactory:
         assert agent.name == "researcher"
         assert agent.description is not None
     
-    def test_create_developer_agent(self):
-        """Test creating a developer agent"""
-        agent = AgentFactory.create_agent(AgentType.DEVELOPER)
+    def test_create_finance_agent(self):
+        """Test creating a finance agent"""
+        agent = AgentFactory.create_agent(AgentType.FINANCE)
         
         # Verify it's an LlmAgent
         assert isinstance(agent, LlmAgent)
-        assert agent.name == "developer"
+        assert agent.name == "finance"
         assert agent.description is not None
     
     def test_create_data_analyst_agent(self):
@@ -77,10 +77,10 @@ class TestAgentFactory:
         # Create sub-agents first
         team_lead = AgentFactory.create_agent(AgentType.TEAM_LEAD)
         researcher = AgentFactory.create_agent(AgentType.RESEARCHER)
-        developer = AgentFactory.create_agent(AgentType.DEVELOPER)
+        finance = AgentFactory.create_agent(AgentType.FINANCE)
         data_analyst = AgentFactory.create_agent(AgentType.DATA_ANALYST)
         
-        sub_agents = [team_lead, researcher, developer, data_analyst]
+        sub_agents = [team_lead, researcher, finance, data_analyst]
         
         # Create orchestrator
         agent = AgentFactory.create_agent(

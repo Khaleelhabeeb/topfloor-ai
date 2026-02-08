@@ -110,20 +110,39 @@ class AgentStatusService:
     
     def get_all_statuses(
         self,
-        user_id: int
+        user_id: int,
+        status_filter: Optional[AgentStatusEnum] = None,
+        sort_by: str = "agent_type",
+        sort_order: str = "asc"
     ) -> List[AgentStatus]:
         """
-        Get all agent statuses for a user.
+        Get all agent statuses for a user with optional filtering and sorting.
         
         Args:
             user_id: ID of the user
+            status_filter: Optional status filter (available, busy, idle)
+            sort_by: Field to sort by (agent_type, status, tasks_in_queue, last_active_at)
+            sort_order: Sort order (asc or desc)
             
         Returns:
             List of AgentStatus objects
         """
-        return self.db.query(AgentStatus).filter(
+        query = self.db.query(AgentStatus).filter(
             AgentStatus.user_id == user_id
-        ).all()
+        )
+        
+        # Apply status filter
+        if status_filter is not None:
+            query = query.filter(AgentStatus.status == status_filter)
+        
+        # Apply sorting
+        sort_column = getattr(AgentStatus, sort_by, AgentStatus.agent_type)
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        return query.all()
 
     
     def set_status(

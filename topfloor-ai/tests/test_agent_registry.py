@@ -25,9 +25,9 @@ def test_get_agent_by_type():
     assert orchestrator.agent_type == AgentType.ORCHESTRATOR
     assert orchestrator.can_delegate is True
     
-    developer = AgentRegistry.get_agent(AgentType.DEVELOPER)
-    assert developer.name == "developer"
-    assert developer.code_executor is True
+    finance = AgentRegistry.get_agent(AgentType.FINANCE)
+    assert finance.name == "finance"
+    assert finance.code_executor is False
 
 
 def test_get_unknown_agent_raises_error():
@@ -43,14 +43,14 @@ def test_default_agents_for_user():
     assert AgentType.ORCHESTRATOR in default_agents
     assert AgentType.TEAM_LEAD in default_agents
     assert AgentType.RESEARCHER in default_agents
-    assert AgentType.DEVELOPER in default_agents
+    assert AgentType.FINANCE in default_agents
     assert AgentType.DATA_ANALYST in default_agents
 
 
 def test_validate_agent_type():
     """Test agent type validation"""
     assert AgentRegistry.validate_agent_type("orchestrator") is True
-    assert AgentRegistry.validate_agent_type("developer") is True
+    assert AgentRegistry.validate_agent_type("finance") is True
     assert AgentRegistry.validate_agent_type("invalid_type") is False
 
 
@@ -74,11 +74,13 @@ def test_orchestrator_has_no_tools():
     assert orchestrator.can_delegate is True
 
 
-def test_developer_has_code_executor():
-    """Test that developer can execute code"""
-    developer = AgentRegistry.get_agent(AgentType.DEVELOPER)
-    assert developer.code_executor is True
-    assert "code_execution" in developer.allowed_tools
+def test_finance_has_financial_tools():
+    """Test that finance agent has financial tools"""
+    finance = AgentRegistry.get_agent(AgentType.FINANCE)
+    assert finance.code_executor is False
+    assert "fetch_market_data" in finance.allowed_tools
+    assert "analyze_bank_statement" in finance.allowed_tools
+    assert "create_budget" in finance.allowed_tools
 
 
 def test_researcher_has_search_tools():

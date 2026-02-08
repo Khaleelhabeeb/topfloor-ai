@@ -18,9 +18,59 @@ class ChatService:
     def __init__(self, db: DBSession):
         self.db = db
     
-    def create_message(self, user_id: int, message_data: ChatMessageCreate) -> ChatMessage:
+    def create_message(
+        self,
+        session_id: int,
+        user_id: int,
+        agent_type: str,
+        role: str,
+        content: str,
+        metadata: Optional[dict] = None
+    ) -> ChatMessage:
         """
-        Create a new chat message.
+        Create a new chat message (simplified interface).
+        
+        Args:
+            session_id: Session ID
+            user_id: User ID
+            agent_type: Agent type
+            role: Message role (user, agent, system)
+            content: Message content
+            metadata: Optional metadata
+            
+        Returns:
+            Created message object
+        """
+        # Generate unique message_id
+        message_id = f"msg_{uuid.uuid4().hex[:16]}"
+        
+        # Convert role string to enum
+        role_enum = MessageRole(role)
+        
+        # Create message object
+        db_message = ChatMessage(
+            message_id=message_id,
+            session_id=session_id,
+            user_id=user_id,
+            agent_type=agent_type,
+            role=role_enum,
+            content=content,
+            message_metadata=metadata,
+            created_at=datetime.now(timezone.utc)
+        )
+        
+        self.db.add(db_message)
+        try:
+            self.db.commit()
+            self.db.refresh(db_message)
+            return db_message
+        except IntegrityError as e:
+            self.db.rollback()
+            raise ValueError(f"Failed to create message: {str(e)}")
+    
+    def create_message_from_schema(self, user_id: int, message_data: ChatMessageCreate) -> ChatMessage:
+        """
+        Create a new chat message from schema.
         
         Args:
             user_id: ID of the user creating the message
@@ -96,15 +146,21 @@ class ChatService:
         self,
         session_id: int,
         user_id: int,
+        role: Optional[MessageRole] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "asc",
         skip: int = 0,
         limit: int = 100
     ) -> tuple[List[ChatMessage], int]:
         """
-        Get messages for a specific session with pagination.
+        Get messages for a specific session with filtering, sorting, and pagination.
         
         Args:
             session_id: Session ID to filter messages
             user_id: User ID (for authorization)
+            role: Optional role filter (user, agent, system)
+            sort_by: Field to sort by (created_at, role)
+            sort_order: Sort order (asc or desc)
             skip: Number of records to skip (for pagination)
             limit: Maximum number of records to return
             
@@ -119,11 +175,22 @@ class ChatService:
             )
         )
         
+        # Apply role filter
+        if role is not None:
+            query = query.filter(ChatMessage.role == role)
+        
         # Get total count before pagination
         total = query.count()
         
-        # Apply pagination and ordering (chronological order)
-        messages = query.order_by(ChatMessage.created_at).offset(skip).limit(limit).all()
+        # Apply sorting
+        sort_column = getattr(ChatMessage, sort_by, ChatMessage.created_at)
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        # Apply pagination
+        messages = query.offset(skip).limit(limit).all()
         
         return messages, total
     
@@ -131,15 +198,21 @@ class ChatService:
         self,
         user_id: int,
         agent_type: str,
+        role: Optional[MessageRole] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
         skip: int = 0,
         limit: int = 100
     ) -> tuple[List[ChatMessage], int]:
         """
-        Get all messages for a specific agent type.
+        Get all messages for a specific agent type with filtering and sorting.
         
         Args:
             user_id: User ID to filter messages
             agent_type: Agent type to filter
+            role: Optional role filter (user, agent, system)
+            sort_by: Field to sort by (created_at, role)
+            sort_order: Sort order (asc or desc)
             skip: Number of records to skip (for pagination)
             limit: Maximum number of records to return
             
@@ -154,11 +227,22 @@ class ChatService:
             )
         )
         
+        # Apply role filter
+        if role is not None:
+            query = query.filter(ChatMessage.role == role)
+        
         # Get total count before pagination
         total = query.count()
         
-        # Apply pagination and ordering (most recent first)
-        messages = query.order_by(desc(ChatMessage.created_at)).offset(skip).limit(limit).all()
+        # Apply sorting
+        sort_column = getattr(ChatMessage, sort_by, ChatMessage.created_at)
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        # Apply pagination
+        messages = query.offset(skip).limit(limit).all()
         
         return messages, total
     
@@ -193,21 +277,27 @@ class ChatService:
         user_id: int,
         agent_type: str,
         session_id: Optional[int] = None,
+        role: Optional[MessageRole] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "asc",
         skip: int = 0,
         limit: int = 100
     ) -> tuple[List[ChatMessage], int]:
         """
-        Get conversation history for a user and agent, optionally filtered by session.
+        Get conversation history for a user and agent with filtering and sorting.
         
         Args:
             user_id: User ID to filter messages
             agent_type: Agent type to filter
             session_id: Optional session ID to filter
+            role: Optional role filter (user, agent, system)
+            sort_by: Field to sort by (created_at, role)
+            sort_order: Sort order (asc or desc)
             skip: Number of records to skip (for pagination)
             limit: Maximum number of records to return
             
         Returns:
-            Tuple of (list of messages in chronological order, total count)
+            Tuple of (list of messages in specified order, total count)
         """
         # Build query
         query = self.db.query(ChatMessage).filter(
@@ -220,11 +310,21 @@ class ChatService:
         if session_id is not None:
             query = query.filter(ChatMessage.session_id == session_id)
         
+        if role is not None:
+            query = query.filter(ChatMessage.role == role)
+        
         # Get total count before pagination
         total = query.count()
         
-        # Apply pagination and ordering (chronological order for conversation flow)
-        messages = query.order_by(ChatMessage.created_at).offset(skip).limit(limit).all()
+        # Apply sorting
+        sort_column = getattr(ChatMessage, sort_by, ChatMessage.created_at)
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        # Apply pagination
+        messages = query.offset(skip).limit(limit).all()
         
         return messages, total
     
@@ -317,16 +417,22 @@ class ChatService:
         user_id: int,
         search_term: str,
         agent_type: Optional[str] = None,
+        role: Optional[MessageRole] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
         skip: int = 0,
         limit: int = 50
     ) -> tuple[List[ChatMessage], int]:
         """
-        Search messages by content.
+        Search messages by content with filtering and sorting.
         
         Args:
             user_id: User ID to filter messages
             search_term: Term to search for in message content
             agent_type: Optional agent type filter
+            role: Optional role filter (user, agent, system)
+            sort_by: Field to sort by (created_at, role)
+            sort_order: Sort order (asc or desc)
             skip: Number of records to skip (for pagination)
             limit: Maximum number of records to return
             
@@ -344,10 +450,20 @@ class ChatService:
         if agent_type is not None:
             query = query.filter(ChatMessage.agent_type == agent_type)
         
+        if role is not None:
+            query = query.filter(ChatMessage.role == role)
+        
         # Get total count before pagination
         total = query.count()
         
-        # Apply pagination and ordering (most recent first)
-        messages = query.order_by(desc(ChatMessage.created_at)).offset(skip).limit(limit).all()
+        # Apply sorting
+        sort_column = getattr(ChatMessage, sort_by, ChatMessage.created_at)
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        # Apply pagination
+        messages = query.offset(skip).limit(limit).all()
         
         return messages, total

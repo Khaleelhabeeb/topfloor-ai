@@ -29,8 +29,8 @@ def test_user(db_session: DBSession) -> User:
 def test_session(db_session: DBSession, test_user: User) -> Session:
     """Create a test session"""
     session_data = SessionCreate(
-        agent_type="developer",
-        agent_name="developer",
+        agent_type="finance",
+        agent_name="finance",
         title="Test Session",
         description="A test session"
     )
@@ -174,8 +174,8 @@ class TestSessionService:
         # Create multiple sessions
         for i in range(5):
             session_data = SessionCreate(
-                agent_type="developer" if i % 2 == 0 else "researcher",
-                agent_name="developer" if i % 2 == 0 else "researcher",
+                agent_type="finance" if i % 2 == 0 else "researcher",
+                agent_name="finance" if i % 2 == 0 else "researcher",
                 title=f"Session {i}"
             )
             SessionService.create_session(db_session, test_user.id, session_data)
@@ -191,8 +191,8 @@ class TestSessionService:
         # Create sessions with different statuses
         for i in range(3):
             session_data = SessionCreate(
-                agent_type="developer",
-                agent_name="developer",
+                agent_type="finance",
+                agent_name="finance",
                 title=f"Session {i}"
             )
             session = SessionService.create_session(db_session, test_user.id, session_data)
@@ -214,7 +214,7 @@ class TestSessionService:
     def test_list_user_sessions_with_agent_type_filter(self, db_session: DBSession, test_user: User):
         """Test listing sessions with agent type filter"""
         # Create sessions with different agent types
-        for agent_type in ["developer", "researcher", "developer"]:
+        for agent_type in ["finance", "researcher", "finance"]:
             session_data = SessionCreate(
                 agent_type=agent_type,
                 agent_name=agent_type,
@@ -222,24 +222,24 @@ class TestSessionService:
             )
             SessionService.create_session(db_session, test_user.id, session_data)
         
-        # List only developer sessions
+        # List only finance sessions
         sessions, total = SessionService.list_user_sessions(
             db_session,
             test_user.id,
-            agent_type="developer"
+            agent_type="finance"
         )
         
         assert len(sessions) == 2
         assert total == 2
-        assert all(s.agent_type == "developer" for s in sessions)
+        assert all(s.agent_type == "finance" for s in sessions)
     
     def test_list_user_sessions_pagination(self, db_session: DBSession, test_user: User):
         """Test session list pagination"""
         # Create 25 sessions
         for i in range(25):
             session_data = SessionCreate(
-                agent_type="developer",
-                agent_name="developer",
+                agent_type="finance",
+                agent_name="finance",
                 title=f"Session {i}"
             )
             SessionService.create_session(db_session, test_user.id, session_data)

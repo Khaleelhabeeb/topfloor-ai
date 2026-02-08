@@ -301,66 +301,76 @@ function OfficeNamePlate({
 }) {
   return (
     <group position={position} rotation={[0, rotation, 0]}>
-      {/* Background plate - solid white */}
-      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[3, 1.2]} />
-        <meshStandardMaterial 
-          color="#ffffff" 
-        />
-      </mesh>
-      
-      {/* Border - darker for contrast */}
+      {/* Border - gold accent for premium look */}
       <mesh position={[0, 0.021, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[3.1, 1.3]} />
+        <planeGeometry args={[4.2, 2.0]} />
         <meshStandardMaterial 
-          color="#2d3436" 
+          color="#d4af37" 
+          metalness={0.8}
+          roughness={0.2}
         />
       </mesh>
       
-      {/* Name text - bold black */}
+      {/* Background plate - dark navy blue for contrast */}
+      <mesh position={[0, 0.022, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[4.0, 1.8]} />
+        <meshStandardMaterial 
+          color="#1e293b" 
+          emissive="#1e293b"
+          emissiveIntensity={0.3}
+        />
+      </mesh>
+      
+      {/* Name text - larger and brighter */}
       <Text
-        position={[0, 0.03, 0.25]}
+        position={[0, 0.03, 0.35]}
         rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.25}
-        color="#ffffffff"
+        fontSize={0.5}
+        color="#ffffff"
         anchorX="center"
         anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#000000"
       >
         {name}
       </Text>
       
-      {/* Role text - dark gray */}
+      {/* Role text - larger and brighter */}
       <Text
-        position={[0, 0.03, -0.05]}
+        position={[0, 0.03, -0.15]}
         rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.15}
-        color="#ffffffff"
+        fontSize={0.28}
+        color="#e2e8f0"
         anchorX="center"
         anchorY="middle"
+        outlineWidth={0.01}
+        outlineColor="#000000"
       >
         {role}
       </Text>
       
-      {/* Status indicator - bright green dot */}
-      <mesh position={[-1.2, 0.03, -0.4]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.08, 16]} />
+      {/* Status indicator - bright green dot with glow */}
+      <mesh position={[-1.6, 0.03, -0.6]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.12, 16]} />
         <meshStandardMaterial 
           color="#10b981" 
           emissive="#10b981"
-          emissiveIntensity={0.8}
+          emissiveIntensity={2.0}
         />
       </mesh>
       
-      {/* Status text - green */}
+      {/* Status text - brighter green */}
       <Text
-        position={[-0.7, 0.03, -0.4]}
+        position={[-0.9, 0.03, -0.6]}
         rotation={[-Math.PI / 2, 0, 0]}
-        fontSize={0.12}
-        color="#059669"
+        fontSize={0.18}
+        color="#34d399"
         anchorX="left"
         anchorY="middle"
+        outlineWidth={0.01}
+        outlineColor="#000000"
       >
-        Connected
+        Available
       </Text>
     </group>
   );
@@ -385,8 +395,8 @@ export function OfficeLayout() {
       <OfficeNamePlate 
         position={[-9.5, 0, -5]} 
         rotation={0}
-        name="Sarah Mitchell"
-        role="Marketing Manager"
+        name="Sarah"
+        role="Researcher"
       />
       
       {/* James's office furniture */}
@@ -396,8 +406,8 @@ export function OfficeLayout() {
       <OfficeNamePlate 
         position={[-9.5, 0, 5]} 
         rotation={0}
-        name="James Chen"
-        role="Senior Developer"
+        name="James"
+        role="Data Analyst"
       />
       
       {/* Alex's office furniture */}
@@ -407,8 +417,8 @@ export function OfficeLayout() {
       <OfficeNamePlate 
         position={[9.5, 0, -5]} 
         rotation={0}
-        name="Alex Rivera"
-        role="UI/UX Designer"
+        name="Alex"
+        role="Team Lead"
       />
       
       {/* Peter's office furniture */}
@@ -418,8 +428,8 @@ export function OfficeLayout() {
       <OfficeNamePlate 
         position={[9.5, 0, 5]} 
         rotation={0}
-        name="Peter Williams"
-        role="HR Specialist"
+        name="Peter"
+        role="Finance"
       />
       
       {/* CEO Office - larger premium desk at the north end of hallway */}

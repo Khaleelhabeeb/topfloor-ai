@@ -63,28 +63,6 @@ def upgrade() -> None:
     op.create_index(op.f('ix_agent_status_agent_type'), 'agent_status', ['agent_type'], unique=False)
     op.create_index(op.f('ix_agent_status_id'), 'agent_status', ['id'], unique=False)
     op.create_index(op.f('ix_agent_status_user_id'), 'agent_status', ['user_id'], unique=False)
-    op.create_table('artifacts',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('artifact_id', sa.String(length=255), nullable=False),
-    sa.Column('task_id', sa.Integer(), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('agent_type', sa.String(length=50), nullable=False),
-    sa.Column('file_name', sa.String(length=255), nullable=False),
-    sa.Column('file_type', sa.String(length=50), nullable=False),
-    sa.Column('file_path', sa.String(length=500), nullable=False),
-    sa.Column('file_size', sa.BigInteger(), nullable=False),
-    sa.Column('mime_type', sa.String(length=100), nullable=True),
-    sa.Column('meta_data', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['task_id'], ['tasks.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_artifacts_agent_type'), 'artifacts', ['agent_type'], unique=False)
-    op.create_index(op.f('ix_artifacts_artifact_id'), 'artifacts', ['artifact_id'], unique=True)
-    op.create_index(op.f('ix_artifacts_id'), 'artifacts', ['id'], unique=False)
-    op.create_index(op.f('ix_artifacts_task_id'), 'artifacts', ['task_id'], unique=False)
-    op.create_index(op.f('ix_artifacts_user_id'), 'artifacts', ['user_id'], unique=False)
     op.create_table('chat_messages',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message_id', sa.String(length=255), nullable=False),
@@ -134,12 +112,6 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_chat_messages_agent_type'), table_name='chat_messages')
     op.drop_index('idx_user_agent_created', table_name='chat_messages')
     op.drop_table('chat_messages')
-    op.drop_index(op.f('ix_artifacts_user_id'), table_name='artifacts')
-    op.drop_index(op.f('ix_artifacts_task_id'), table_name='artifacts')
-    op.drop_index(op.f('ix_artifacts_id'), table_name='artifacts')
-    op.drop_index(op.f('ix_artifacts_artifact_id'), table_name='artifacts')
-    op.drop_index(op.f('ix_artifacts_agent_type'), table_name='artifacts')
-    op.drop_table('artifacts')
     op.drop_index(op.f('ix_agent_status_user_id'), table_name='agent_status')
     op.drop_index(op.f('ix_agent_status_id'), table_name='agent_status')
     op.drop_index(op.f('ix_agent_status_agent_type'), table_name='agent_status')

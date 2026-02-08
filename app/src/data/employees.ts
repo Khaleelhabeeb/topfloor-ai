@@ -1,3 +1,5 @@
+import { AgentType } from '@/lib/agents';
+
 export interface Employee {
   id: string;
   name: string;
@@ -5,62 +7,92 @@ export interface Employee {
   department: string;
   avatar: string;
   officePosition: { x: number; z: number };
+  agentType: AgentType;
   initialMessages: { sender: string; text: string; time: string }[];
 }
 
-export const employees: Employee[] = [
-  {
+// Static employee visual data (positions, avatars, names)
+// This will be merged with API agent data
+export const employeeVisuals: Record<string, Omit<Employee, 'agentType'>> = {
+  sarah: {
     id: 'sarah',
-    name: 'Sarah Mitchell',
-    role: 'Marketing Manager',
-    department: 'Marketing',
+    name: 'Sarah',
+    role: 'Researcher',
+    department: 'Research',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face',
     officePosition: { x: -8, z: -4 },
     initialMessages: [
-      { sender: 'Sarah', text: 'Hi! Welcome to the marketing team office!', time: '9:00 AM' },
-      { sender: 'Sarah', text: 'We\'re working on the Q2 campaign strategy.', time: '9:01 AM' },
-      { sender: 'Sarah', text: 'Feel free to check out our latest brand materials.', time: '9:02 AM' },
+      { sender: 'Sarah', text: 'Hi! I can help you with web research and information synthesis. What would you like me to research?', time: '9:00 AM' },
     ],
   },
-  {
+  james: {
     id: 'james',
-    name: 'James Chen',
-    role: 'Senior Developer',
-    department: 'Engineering',
+    name: 'James',
+    role: 'Data Analyst',
+    department: 'Analytics',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
     officePosition: { x: -8, z: 4 },
     initialMessages: [
-      { sender: 'James', text: 'Hey there! Welcome to my dev cave.', time: '9:15 AM' },
-      { sender: 'James', text: 'Just pushed some updates to the main branch.', time: '9:16 AM' },
-      { sender: 'James', text: 'Let me know if you need any technical help!', time: '9:17 AM' },
+      { sender: 'James', text: 'Hey! I specialize in data visualization and analysis. Let me know if you need any insights.', time: '9:15 AM' },
     ],
   },
-  {
+  alex: {
     id: 'alex',
-    name: 'Alex Rivera',
-    role: 'UI/UX Designer',
-    department: 'Design',
+    name: 'Alex',
+    role: 'Team Lead',
+    department: 'Management',
     avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face',
     officePosition: { x: 8, z: -4 },
     initialMessages: [
-      { sender: 'Alex', text: 'Hey! Great to see you.', time: '10:00 AM' },
-      { sender: 'Alex', text: 'I\'m finalizing the new dashboard mockups.', time: '10:01 AM' },
-      { sender: 'Alex', text: 'Want me to walk you through the design system?', time: '10:02 AM' },
+      { sender: 'Alex', text: 'Hey! I coordinate tasks and manage team workload. Need help with task assignments?', time: '10:00 AM' },
     ],
   },
-  {
+  peter: {
     id: 'peter',
-    name: 'Peter Williams',
-    role: 'HR Specialist',
-    department: 'Human Resources',
+    name: 'Peter',
+    role: 'Finance',
+    department: 'Finance',
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
     officePosition: { x: 8, z: 4 },
     initialMessages: [
-      { sender: 'Peter', text: 'Welcome! Happy to help with any HR questions.', time: '11:00 AM' },
-      { sender: 'Peter', text: 'We just updated the employee handbook.', time: '11:01 AM' },
-      { sender: 'Peter', text: 'Feel free to reach out anytime!', time: '11:02 AM' },
+      { sender: 'Peter', text: 'Welcome! I can help with financial analysis and market research. What insights do you need?', time: '11:00 AM' },
     ],
   },
+};
+
+// Map agent types to employee IDs
+export const agentToEmployeeMap: Record<AgentType, string> = {
+  researcher: 'sarah',
+  data_analyst: 'james',
+  team_lead: 'alex',
+  finance: 'peter',
+};
+
+// Helper function to get employee by agent type
+export function getEmployeeByAgentType(agentType: AgentType): Employee | undefined {
+  const employeeId = agentToEmployeeMap[agentType];
+  const visual = employeeVisuals[employeeId];
+  if (!visual) return undefined;
+  
+  return {
+    ...visual,
+    agentType,
+  };
+}
+
+// Helper function to get all employees (will be populated from API)
+export function getEmployeesFromAgents(agentTypes: AgentType[]): Employee[] {
+  return agentTypes
+    .map(getEmployeeByAgentType)
+    .filter((emp): emp is Employee => emp !== undefined);
+}
+
+// Default employees array (for backwards compatibility)
+export const employees: Employee[] = [
+  { ...employeeVisuals.sarah, agentType: 'researcher' },
+  { ...employeeVisuals.james, agentType: 'data_analyst' },
+  { ...employeeVisuals.alex, agentType: 'team_lead' },
+  { ...employeeVisuals.peter, agentType: 'finance' },
 ];
 
 export interface CEOFolder {

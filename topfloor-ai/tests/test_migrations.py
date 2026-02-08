@@ -71,7 +71,6 @@ def test_all_tables_exist(db_engine):
         "tasks",
         "task_history",
         "chat_messages",
-        "artifacts",
         "agent_status"
     ]
     
@@ -142,12 +141,6 @@ def test_referential_integrity(db_engine):
     referred_tables = [fk["referred_table"] for fk in task_history_fks]
     assert "tasks" in referred_tables
     
-    # Check artifacts references tasks and users
-    artifacts_fks = inspector.get_foreign_keys("artifacts")
-    referred_tables = [fk["referred_table"] for fk in artifacts_fks]
-    assert "tasks" in referred_tables
-    assert "users" in referred_tables
-    
     # Check agent_status references users and tasks
     agent_status_fks = inspector.get_foreign_keys("agent_status")
     referred_tables = [fk["referred_table"] for fk in agent_status_fks]
@@ -176,7 +169,6 @@ def test_downgrade_one_step(alembic_config, db_engine):
     assert "tasks" not in tables
     assert "task_history" not in tables
     assert "chat_messages" not in tables
-    assert "artifacts" not in tables
     assert "agent_status" not in tables
     
     # These tables should still exist
@@ -207,7 +199,6 @@ def test_upgrade_back_to_head(alembic_config, db_engine):
         "tasks",
         "task_history",
         "chat_messages",
-        "artifacts",
         "agent_status"
     ]
     

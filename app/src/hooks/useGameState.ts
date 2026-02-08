@@ -18,7 +18,6 @@ interface GameState {
   currentFolder: CEOFolder | null;
   chatMessages: Record<string, ChatMessage[]>;
   playerPosition: { x: number; z: number };
-  nearDoor: string | null;
   insideDoor: string | null;
   nearChair: boolean;
   isSeated: boolean;
@@ -34,7 +33,6 @@ interface GameState {
   closeFolder: () => void;
   addChatMessage: (employeeId: string, message: ChatMessage) => void;
   setPlayerPosition: (position: { x: number; z: number }) => void;
-  setNearDoor: (doorId: string | null) => void;
   setInsideDoor: (doorId: string | null) => void;
   setNearChair: (near: boolean) => void;
   setIsSeated: (seated: boolean) => void;
@@ -47,7 +45,6 @@ export const useGameState = create<GameState>((set, get) => ({
   currentFolder: null,
   chatMessages: {},
   playerPosition: { x: 0, z: 0 },
-  nearDoor: null,
   insideDoor: null,
   nearChair: false,
   isSeated: false,
@@ -106,7 +103,6 @@ export const useGameState = create<GameState>((set, get) => ({
   },
 
   setPlayerPosition: (position) => set({ playerPosition: position }),
-  setNearDoor: (doorId) => set({ nearDoor: doorId }),
   setInsideDoor: (doorId) => set({ insideDoor: doorId }),
   setNearChair: (near) => set({ nearChair: near }),
   setIsSeated: (seated) => set({ isSeated: seated }),

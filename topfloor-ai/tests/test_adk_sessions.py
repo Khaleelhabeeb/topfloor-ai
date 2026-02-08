@@ -39,8 +39,8 @@ class TestSessionManager:
         db_sess, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer",
+            agent_type="finance",
+            agent_name="finance",
             title="Test Session"
         )
         
@@ -48,7 +48,7 @@ class TestSessionManager:
         assert db_sess.id is not None
         assert db_sess.session_id.startswith("sess_")
         assert db_sess.user_id == test_user.id
-        assert db_sess.agent_type == "developer"
+        assert db_sess.agent_type == "finance"
         assert db_sess.status == SessionStatus.ACTIVE
         
         # Verify ADK session exists
@@ -112,8 +112,8 @@ class TestSessionManager:
         db_sess, _ = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
         session_manager.archive_session(
@@ -142,8 +142,8 @@ class TestSessionManager:
         db_sess, _ = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
         session_id = db_sess.session_id
@@ -175,8 +175,8 @@ class TestSessionManager:
         db_sess, _ = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
         session_id = db_sess.session_id
@@ -201,15 +201,15 @@ class TestSessionManager:
         db_sess, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
         # Initialize state
         MemoryStrategy.initialize_session_state(
             adk_sess,
             user_id=test_user.id,
-            agent_type="developer"
+            agent_type="finance"
         )
         
         # Get state
@@ -217,7 +217,7 @@ class TestSessionManager:
         
         assert state is not None
         assert state.get("user_id") == test_user.id
-        assert state.get("agent_type") == "developer"
+        assert state.get("agent_type") == "finance"
     
     def test_update_session_state(
         self,
@@ -230,15 +230,15 @@ class TestSessionManager:
         db_sess, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
         # Initialize state
         MemoryStrategy.initialize_session_state(
             adk_sess,
             user_id=test_user.id,
-            agent_type="developer"
+            agent_type="finance"
         )
         
         # Update state
@@ -267,19 +267,19 @@ class TestMemoryStrategy:
         _, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
         MemoryStrategy.initialize_session_state(
             adk_sess,
             user_id=test_user.id,
-            agent_type="developer",
+            agent_type="finance",
             initial_context={"test_key": "test_value"}
         )
         
         assert adk_sess.state.get("user_id") == test_user.id
-        assert adk_sess.state.get("agent_type") == "developer"
+        assert adk_sess.state.get("agent_type") == "finance"
         assert adk_sess.state.get("test_key") == "test_value"
         assert "session_started_at" in adk_sess.state
         assert "task_context" in adk_sess.state
@@ -295,11 +295,11 @@ class TestMemoryStrategy:
         _, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
-        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "developer")
+        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "finance")
         
         MemoryStrategy.update_task_context(
             adk_sess,
@@ -320,11 +320,11 @@ class TestMemoryStrategy:
         _, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
-        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "developer")
+        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "finance")
         MemoryStrategy.update_task_context(adk_sess, {"task": "test"})
         
         # Clear context
@@ -343,11 +343,11 @@ class TestMemoryStrategy:
         _, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
-        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "developer")
+        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "finance")
         
         MemoryStrategy.add_metadata(adk_sess, "last_action", "code_review")
         
@@ -368,18 +368,18 @@ class TestMemoryStrategy:
         _, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
-        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "developer")
+        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "finance")
         MemoryStrategy.update_task_context(adk_sess, {"task": "test"})
         MemoryStrategy.add_metadata(adk_sess, "key", "value")
         
         summary = MemoryStrategy.get_session_summary(adk_sess)
         
         assert summary.get("user_id") == test_user.id
-        assert summary.get("agent_type") == "developer"
+        assert summary.get("agent_type") == "finance"
         assert "task_context_keys" in summary
         assert "metadata_keys" in summary
         assert "state_size_estimate" in summary
@@ -394,11 +394,11 @@ class TestMemoryStrategy:
         _, adk_sess = session_manager.create_session(
             db=db_session,
             user_id=test_user.id,
-            agent_type="developer",
-            agent_name="developer"
+            agent_type="finance",
+            agent_name="finance"
         )
         
-        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "developer")
+        MemoryStrategy.initialize_session_state(adk_sess, test_user.id, "finance")
         
         # Add many items to task context
         for i in range(60):
@@ -424,21 +424,21 @@ class TestMemoryScope:
         """Test creating a scope key"""
         key = MemoryScope.create_scope_key(
             user_id=123,
-            agent_type="developer",
+            agent_type="finance",
             session_id="sess_abc123"
         )
         
-        assert key == "user_123:agent_developer:session_sess_abc123"
+        assert key == "user_123:agent_finance:session_sess_abc123"
     
     def test_parse_scope_key(self):
         """Test parsing a scope key"""
-        key = "user_123:agent_developer:session_sess_abc123"
+        key = "user_123:agent_finance:session_sess_abc123"
         
         parsed = MemoryScope.parse_scope_key(key)
         
         assert parsed is not None
         assert parsed["user_id"] == "123"
-        assert parsed["agent_type"] == "developer"
+        assert parsed["agent_type"] == "finance"
         assert parsed["session_id"] == "sess_abc123"
     
     def test_parse_invalid_scope_key(self):
@@ -448,7 +448,7 @@ class TestMemoryScope:
     
     def test_validate_scope(self):
         """Test scope validation"""
-        assert MemoryScope.validate_scope(1, "developer", "sess_123") is True
-        assert MemoryScope.validate_scope(0, "developer", "sess_123") is False
+        assert MemoryScope.validate_scope(1, "finance", "sess_123") is True
+        assert MemoryScope.validate_scope(0, "finance", "sess_123") is False
         assert MemoryScope.validate_scope(1, "", "sess_123") is False
-        assert MemoryScope.validate_scope(1, "developer", "") is False
+        assert MemoryScope.validate_scope(1, "finance", "") is False

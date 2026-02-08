@@ -55,7 +55,7 @@ class TestOrchestratorManager:
         assert orchestrator.name == "orchestrator"
         assert hasattr(orchestrator, 'sub_agents')
         assert orchestrator.sub_agents is not None
-        assert len(orchestrator.sub_agents) == 4  # team_lead, researcher, developer, data_analyst
+        assert len(orchestrator.sub_agents) == 4  # team_lead, researcher, finance, data_analyst
     
     def test_orchestrator_caching(
         self,
@@ -134,11 +134,11 @@ class TestOrchestratorManager:
         """Test getting specific agent by type"""
         agent = orchestrator_manager.get_agent_by_type(
             test_user.id,
-            AgentType.DEVELOPER
+            AgentType.FINANCE
         )
         
         assert agent is not None
-        assert agent.name == "developer"
+        assert agent.name == "finance"
     
     def test_list_available_agents(
         self,
@@ -152,7 +152,7 @@ class TestOrchestratorManager:
         agent_names = [a["name"] for a in agents]
         assert "team_lead" in agent_names
         assert "researcher" in agent_names
-        assert "developer" in agent_names
+        assert "finance" in agent_names
         assert "data_analyst" in agent_names
 
 
@@ -163,61 +163,61 @@ class TestCollaboration:
         """Test creating an agent transfer"""
         transfer = AgentTransfer(
             from_agent="orchestrator",
-            to_agent="developer",
-            reason="code_task",
-            context={"task": "write_function"}
+            to_agent="finance",
+            reason="financial_task",
+            context={"task": "analyze_portfolio"}
         )
         
         assert transfer.from_agent == "orchestrator"
-        assert transfer.to_agent == "developer"
-        assert transfer.reason == "code_task"
-        assert transfer.context["task"] == "write_function"
+        assert transfer.to_agent == "finance"
+        assert transfer.reason == "financial_task"
+        assert transfer.context["task"] == "analyze_portfolio"
     
     def test_collaboration_context(self):
         """Test collaboration context"""
         context = CollaborationContext()
         
         # Add transfer
-        transfer = AgentTransfer("orchestrator", "developer", "code_task")
+        transfer = AgentTransfer("orchestrator", "finance", "financial_task")
         context.add_transfer(transfer)
         
         # Set shared data
         context.set_shared_data("project_name", "test_project")
         
         # Set agent output
-        context.set_agent_output("developer", {"code": "def test(): pass"})
+        context.set_agent_output("finance", {"analysis": "portfolio_report"})
         
         # Verify
         assert len(context.transfers) == 1
         assert context.get_shared_data("project_name") == "test_project"
-        assert context.get_agent_output("developer") is not None
+        assert context.get_agent_output("finance") is not None
     
     def test_transfer_chain(self):
         """Test getting transfer chain"""
         context = CollaborationContext()
         
         context.add_transfer(AgentTransfer("orchestrator", "researcher", "research"))
-        context.add_transfer(AgentTransfer("researcher", "developer", "implement"))
-        context.add_transfer(AgentTransfer("developer", "data_analyst", "analyze"))
+        context.add_transfer(AgentTransfer("researcher", "finance", "analyze"))
+        context.add_transfer(AgentTransfer("finance", "data_analyst", "visualize"))
         
         chain = context.get_transfer_chain()
         
-        assert chain == ["orchestrator", "researcher", "developer", "data_analyst"]
+        assert chain == ["orchestrator", "researcher", "finance", "data_analyst"]
     
     def test_sequential_workflow(self):
         """Test creating sequential workflow"""
-        agents = ["researcher", "developer", "data_analyst"]
+        agents = ["researcher", "finance", "data_analyst"]
         context = WorkflowCoordinator.create_sequential_workflow(
             agents,
             initial_context={"project": "test"}
         )
         
-        assert len(context.transfers) == 2  # researcher->developer, developer->data_analyst
+        assert len(context.transfers) == 2  # researcher->finance, finance->data_analyst
         assert context.get_shared_data("project") == "test"
     
     def test_parallel_workflow(self):
         """Test creating parallel workflow"""
-        agents = ["researcher", "developer", "data_analyst"]
+        agents = ["researcher", "finance", "data_analyst"]
         context = WorkflowCoordinator.create_parallel_workflow(
             agents,
             coordinator="orchestrator"
@@ -231,7 +231,7 @@ class TestCollaboration:
         """Test merging agent results with combine strategy"""
         context = CollaborationContext()
         context.set_agent_output("researcher", {"findings": "data"})
-        context.set_agent_output("developer", {"code": "implementation"})
+        context.set_agent_output("finance", {"analysis": "portfolio_report"})
         
         merged = WorkflowCoordinator.merge_agent_results(context, "combine")
         
@@ -243,10 +243,10 @@ class TestCollaboration:
         """Test merging with prioritize_first strategy"""
         context = CollaborationContext()
         context.add_transfer(AgentTransfer("orchestrator", "researcher", "research"))
-        context.add_transfer(AgentTransfer("researcher", "developer", "implement"))
+        context.add_transfer(AgentTransfer("researcher", "finance", "analyze"))
         
         context.set_agent_output("researcher", {"findings": "data"})
-        context.set_agent_output("developer", {"code": "implementation"})
+        context.set_agent_output("finance", {"analysis": "portfolio_report"})
         
         merged = WorkflowCoordinator.merge_agent_results(context, "prioritize_first")
         
@@ -261,11 +261,11 @@ class TestExecutionLifecycle:
         tracker = ExecutionTracker()
         
         execution_id = tracker.start_execution(
-            agent_name="developer",
-            agent_type="developer",
+            agent_name="finance",
+            agent_type="finance",
             user_id=1,
             session_id="sess_123",
-            input_data={"task": "write_code"}
+            input_data={"task": "analyze_portfolio"}
         )
         
         assert execution_id is not None
@@ -274,14 +274,14 @@ class TestExecutionLifecycle:
         execution = tracker.get_execution(execution_id)
         assert execution is not None
         assert execution.status == AgentExecutionStatus.RUNNING
-        assert execution.input_data["task"] == "write_code"
+        assert execution.input_data["task"] == "analyze_portfolio"
     
     def test_execution_complete(self):
         """Test completing execution"""
         tracker = ExecutionTracker()
         
         execution_id = tracker.start_execution(
-            "developer", "developer", 1, "sess_123"
+            "finance", "finance", 1, "sess_123"
         )
         
         tracker.complete_execution(
@@ -303,7 +303,7 @@ class TestExecutionLifecycle:
         tracker = ExecutionTracker()
         
         execution_id = tracker.start_execution(
-            "developer", "developer", 1, "sess_123"
+            "finance", "finance", 1, "sess_123"
         )
         
         tracker.fail_execution(execution_id, "Test error")
@@ -317,9 +317,9 @@ class TestExecutionLifecycle:
         tracker = ExecutionTracker()
         
         # Create executions for different sessions
-        tracker.start_execution("developer", "developer", 1, "sess_123")
+        tracker.start_execution("finance", "finance", 1, "sess_123")
         tracker.start_execution("researcher", "researcher", 1, "sess_123")
-        tracker.start_execution("developer", "developer", 1, "sess_456")
+        tracker.start_execution("finance", "finance", 1, "sess_456")
         
         session_execs = tracker.get_session_executions("sess_123")
         
@@ -330,23 +330,23 @@ class TestExecutionLifecycle:
         """Test getting executions for an agent"""
         tracker = ExecutionTracker()
         
-        tracker.start_execution("developer", "developer", 1, "sess_123")
-        tracker.start_execution("developer", "developer", 2, "sess_456")
+        tracker.start_execution("finance", "finance", 1, "sess_123")
+        tracker.start_execution("finance", "finance", 2, "sess_456")
         tracker.start_execution("researcher", "researcher", 1, "sess_789")
         
-        dev_execs = tracker.get_agent_executions("developer")
-        assert len(dev_execs) == 2
+        finance_execs = tracker.get_agent_executions("finance")
+        assert len(finance_execs) == 2
         
-        dev_user1_execs = tracker.get_agent_executions("developer", user_id=1)
-        assert len(dev_user1_execs) == 1
+        finance_user1_execs = tracker.get_agent_executions("finance", user_id=1)
+        assert len(finance_user1_execs) == 1
     
     def test_get_statistics(self):
         """Test getting execution statistics"""
         tracker = ExecutionTracker()
         
         # Create various executions
-        exec1 = tracker.start_execution("developer", "developer", 1, "sess_123")
-        exec2 = tracker.start_execution("developer", "developer", 1, "sess_456")
+        exec1 = tracker.start_execution("finance", "finance", 1, "sess_123")
+        exec2 = tracker.start_execution("finance", "finance", 1, "sess_456")
         exec3 = tracker.start_execution("researcher", "researcher", 1, "sess_789")
         
         tracker.complete_execution(exec1)
@@ -360,10 +360,10 @@ class TestExecutionLifecycle:
         assert stats["failed"] == 1
         
         # Get agent-specific stats
-        dev_stats = tracker.get_statistics(agent_name="developer")
-        assert dev_stats["total_executions"] == 2
-        assert dev_stats["completed"] == 1
-        assert dev_stats["failed"] == 1
+        finance_stats = tracker.get_statistics(agent_name="finance")
+        assert finance_stats["total_executions"] == 2
+        assert finance_stats["completed"] == 1
+        assert finance_stats["failed"] == 1
     
     def test_clear_old_executions(self):
         """Test clearing old executions"""
@@ -371,7 +371,7 @@ class TestExecutionLifecycle:
         
         # Create many executions
         for i in range(150):
-            tracker.start_execution(f"agent_{i}", "developer", 1, f"sess_{i}")
+            tracker.start_execution(f"agent_{i}", "finance", 1, f"sess_{i}")
         
         assert len(tracker.executions) == 150
         

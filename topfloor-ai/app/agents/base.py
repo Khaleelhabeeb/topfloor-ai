@@ -4,6 +4,7 @@ Base Agent Interface - Abstract base for all agent implementations
 
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
+import os
 from google.adk.agents import LlmAgent
 from google.adk.tools import FunctionTool
 
@@ -71,7 +72,7 @@ class BaseAgent(ABC):
             return self._adk_agent
         
         # Build tools
-        tools = self.build_tools()
+        tools = self.build_tools() if self._supports_tool_calls(self.definition.model) else []
         
         # Get sub-agents (if any)
         sub_agents = self.get_sub_agents()
@@ -98,6 +99,12 @@ class BaseAgent(ABC):
         self._adk_agent = LlmAgent(**agent_config)
         
         return self._adk_agent
+
+    def _supports_tool_calls(self, model_name: str) -> bool:
+        if os.getenv("DISABLE_TOOL_CALLING", "false").lower() == "true":
+            return False
+
+        return True
     
     @property
     def agent_type(self) -> AgentType:

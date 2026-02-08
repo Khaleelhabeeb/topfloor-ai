@@ -6,8 +6,6 @@ export interface CollisionBox {
   maxX: number;
   minZ: number;
   maxZ: number;
-  isDoor?: boolean;
-  isCEOChair?: boolean;
 }
 
 // Office layout collision boundaries
@@ -49,15 +47,15 @@ export function useCollision() {
     { id: 'ceo-desk', minX: -2, maxX: 2, minZ: -10, maxZ: -8 },
   ], []);
 
-  const doorZones = useMemo<CollisionBox[]>(() => [
+  const officeZones = useMemo<CollisionBox[]>(() => [
     // Sarah's office interior (top-left)
-    { id: 'sarah', minX: -14, maxX: -5, minZ: -11, maxZ: -1, isDoor: true },
+    { id: 'sarah', minX: -14, maxX: -5, minZ: -11, maxZ: -1 },
     // James's office interior (bottom-left)
-    { id: 'james', minX: -14, maxX: -5, minZ: 1, maxZ: 11, isDoor: true },
+    { id: 'james', minX: -14, maxX: -5, minZ: 1, maxZ: 11 },
     // Alex's office interior (top-right)
-    { id: 'alex', minX: 5, maxX: 14, minZ: -11, maxZ: -1, isDoor: true },
+    { id: 'alex', minX: 5, maxX: 14, minZ: -11, maxZ: -1 },
     // Peter's office interior (bottom-right)
-    { id: 'peter', minX: 5, maxX: 14, minZ: 1, maxZ: 11, isDoor: true },
+    { id: 'peter', minX: 5, maxX: 14, minZ: 1, maxZ: 11 },
   ], []);
 
   const ceoChairZone = useMemo<CollisionBox>(() => ({
@@ -66,7 +64,6 @@ export function useCollision() {
     maxX: 1,
     minZ: -7.5,
     maxZ: -6,
-    isCEOChair: true,
   }), []);
 
   const checkCollision = (x: number, z: number, radius: number = 0.4): boolean => {
@@ -84,28 +81,14 @@ export function useCollision() {
   };
 
   const getInsideDoor = (x: number, z: number): string | null => {
-    for (const door of doorZones) {
+    for (const office of officeZones) {
       if (
-        x >= door.minX &&
-        x <= door.maxX &&
-        z >= door.minZ &&
-        z <= door.maxZ
+        x >= office.minX &&
+        x <= office.maxX &&
+        z >= office.minZ &&
+        z <= office.maxZ
       ) {
-        return door.id;
-      }
-    }
-    return null;
-  };
-
-  const getNearDoor = (x: number, z: number): string | null => {
-    for (const door of doorZones) {
-      if (
-        x > door.minX - 1 &&
-        x < door.maxX + 1 &&
-        z > door.minZ - 1 &&
-        z < door.maxZ + 1
-      ) {
-        return door.id;
+        return office.id;
       }
     }
     return null;
@@ -122,11 +105,10 @@ export function useCollision() {
 
   return {
     collisionBoxes,
-    doorZones,
+    officeZones,
     ceoChairZone,
     checkCollision,
     getInsideDoor,
-    getNearDoor,
     isNearCEOChair,
   };
 }

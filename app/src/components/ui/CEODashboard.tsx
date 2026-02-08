@@ -7,7 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useGameState } from '@/hooks/useGameState';
+import { useCEO } from '@/hooks/useCEO';
 import { employees } from '@/data/employees';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
   X,
   Settings,
@@ -22,18 +25,11 @@ import {
   TrendingUp,
   Users,
   Target,
-  Activity
+  Activity,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
-
-interface Task {
-  id: string;
-  title: string;
-  status: 'completed' | 'in-progress' | 'pending';
-  priority: 'high' | 'medium' | 'low';
-  assignedTo: string; // employee id
-  dueDate: string;
-  progress: number;
-}
 
 interface ChatMessage {
   id: string;
@@ -45,85 +41,24 @@ interface ChatMessage {
   isFromCEO?: boolean;
 }
 
-const ceoTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Q2 Marketing Campaign Strategy',
-    status: 'in-progress',
-    priority: 'high',
-    assignedTo: 'sarah',
-    dueDate: '2024-02-15',
-    progress: 65
-  },
-  {
-    id: '2',
-    title: 'Mobile App Development Sprint',
-    status: 'in-progress',
-    priority: 'high',
-    assignedTo: 'james',
-    dueDate: '2024-02-20',
-    progress: 45
-  },
-  {
-    id: '3',
-    title: 'Dashboard UI Redesign',
-    status: 'in-progress',
-    priority: 'medium',
-    assignedTo: 'alex',
-    dueDate: '2024-02-18',
-    progress: 80
-  },
-  {
-    id: '4',
-    title: 'Employee Onboarding Process',
-    status: 'completed',
-    priority: 'medium',
-    assignedTo: 'peter',
-    dueDate: '2024-02-10',
-    progress: 100
-  },
-  {
-    id: '5',
-    title: 'Brand Guidelines Update',
-    status: 'pending',
-    priority: 'low',
-    assignedTo: 'sarah',
-    dueDate: '2024-02-25',
-    progress: 0
-  },
-  {
-    id: '6',
-    title: 'API Integration Testing',
-    status: 'in-progress',
-    priority: 'high',
-    assignedTo: 'james',
-    dueDate: '2024-02-16',
-    progress: 55
-  },
-  {
-    id: '7',
-    title: 'Performance Review Templates',
-    status: 'pending',
-    priority: 'medium',
-    assignedTo: 'peter',
-    dueDate: '2024-02-22',
-    progress: 0
-  }
-];
-
-const mockHistory = [
-  { date: '2024-02-01', action: 'Assigned new task to Sarah', details: 'Q2 Marketing Campaign' },
-  { date: '2024-01-30', action: 'Completed quarterly review', details: 'All departments' },
-  { date: '2024-01-28', action: 'Approved budget increase', details: 'Engineering team' },
-  { date: '2024-01-25', action: 'Meeting with stakeholders', details: 'Product roadmap' },
-  { date: '2024-01-22', action: 'Task reassignment', details: 'Mobile app development' },
-];
-
 export function CEODashboard() {
   const { mode, exitCEODesk } = useGameState();
+  const { 
+    dashboard, 
+    isLoadingDashboard, 
+    fetchDashboard,
+    activities,
+    isLoadingActivity,
+    fetchActivity,
+    chatMessages: apiChatMessages,
+    sendChatMessage,
+    isSendingMessage,
+  } = useCEO();
+  
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+  const [expandedAgents, setExpandedAgents] = useState<Record<string, boolean>>({});
+  const [localChatMessages, setLocalChatMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       sender: 'System',
@@ -139,11 +74,75 @@ export function CEODashboard() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch dashboard data on mount
+  useEffect(() => {
+    if (mode === 'ceo-desk') {
+      fetchDashboard();
+      fetchActivity();
+    }
+  }, [mode, fetchDashboard, fetchActivity]);
+
+  // Sync API chat messages with local state
+  useEffect(() => {
+    if (apiChatMessages.length > 0) {
+      const newMessages: ChatMessage[] = [];
+      
+      apiChatMessages.forEach((apiMsg) => {
+        // Add CEO message
+        newMessages.push({
+          id: apiMsg.message_id,
+          sender: 'You (CEO)',
+          senderId: 'ceo',
+          text: apiMsg.message,
+          time: new Date(apiMsg.timestamp).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          }),
+          isFromCEO: true,
+        });
+
+        // Add agent responses
+        if (apiMsg.agent_responses) {
+          apiMsg.agent_responses.forEach((response) => {
+            const employee = employees.find(e => e.agentType === response.agent_id);
+            newMessages.push({
+              id: `${apiMsg.message_id}_${response.agent_id}`,
+              sender: employee?.name || response.agent_name,
+              senderId: response.agent_id,
+              text: response.response,
+              time: new Date(response.timestamp).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+              }),
+              isFromCEO: false,
+            });
+          });
+        }
+      });
+
+      setLocalChatMessages((prev) => {
+        // Keep system message and remove temp messages
+        const systemMsg = prev.find(m => m.senderId === 'system');
+        const nonTempMessages = prev.filter(m => !m.id.startsWith('temp_'));
+        
+        // Merge with new messages, avoiding duplicates
+        const existingIds = new Set(nonTempMessages.map(m => m.id));
+        const uniqueNewMessages = newMessages.filter(m => !existingIds.has(m.id));
+        
+        return systemMsg 
+          ? [systemMsg, ...nonTempMessages, ...uniqueNewMessages] 
+          : [...nonTempMessages, ...uniqueNewMessages];
+      });
+    }
+  }, [apiChatMessages]);
+
   useEffect(() => {
     if (chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
-  }, [chatMessages]);
+  }, [localChatMessages]);
 
   // Handle escape key
   useEffect(() => {
@@ -158,44 +157,72 @@ export function CEODashboard() {
 
   if (mode !== 'ceo-desk') return null;
 
-  const getStatusIcon = (status: Task['status']) => {
+  // Show loading state
+  if (isLoadingDashboard && !dashboard) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center animate-fade-in">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Loading CEO Dashboard...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = dashboard?.overview || {
+    totalTasks: 0,
+    completed: 0,
+    inProgress: 0,
+    pending: 0,
+    avgProgress: 0,
+  };
+
+  const tasksByEmployee = dashboard?.tasks_by_agent || [];
+  const recentActivity = dashboard?.recent_activity || [];
+
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case 'in-progress':
+      case 'in_progress':
         return <Clock className="h-4 w-4 text-blue-500" />;
       case 'pending':
+      case 'queued':
         return <AlertCircle className="h-4 w-4 text-orange-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const getStatusBadge = (status: Task['status']) => {
-    const variants = {
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, 'default' | 'secondary' | 'outline'> = {
       completed: 'default',
-      'in-progress': 'secondary',
-      pending: 'outline'
-    } as const;
+      in_progress: 'secondary',
+      pending: 'outline',
+      queued: 'outline',
+    };
     
     return (
-      <Badge variant={variants[status]} className="text-xs">
-        {status.replace('-', ' ')}
+      <Badge variant={variants[status] || 'outline'} className="text-xs">
+        {status.replace('_', ' ')}
       </Badge>
     );
   };
 
-  const getPriorityColor = (priority: Task['priority']) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
+      case 'critical':
         return 'border-l-red-500';
       case 'medium':
         return 'border-l-yellow-500';
       case 'low':
         return 'border-l-green-500';
+      default:
+        return 'border-l-gray-500';
     }
-  };
-
-  const getAssignedEmployee = (employeeId: string) => {
-    return employees.find(e => e.id === employeeId);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,15 +244,38 @@ export function CEODashboard() {
 
   const handleMentionSelect = (employee: typeof employees[0]) => {
     const lastAtIndex = inputValue.lastIndexOf('@');
-    const newValue = inputValue.substring(0, lastAtIndex) + `@${employee.name.split(' ')[0]} `;
+    const newValue = inputValue.substring(0, lastAtIndex) + `@${employee.role} `;
     setInputValue(newValue);
     setShowMentionMenu(false);
     inputRef.current?.focus();
   };
 
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return;
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isSendingMessage) return;
 
+    const messageText = inputValue;
+    
+    // Clear input immediately
+    setInputValue('');
+
+    // Check if message mentions someone
+    const mentionMatch = messageText.match(/@(\w+)/g);
+    const mentionedAgents: string[] = [];
+    
+    if (mentionMatch) {
+      mentionMatch.forEach((mention) => {
+        const name = mention.substring(1);
+        const employee = employees.find(e => 
+          e.name.toLowerCase() === name.toLowerCase() ||
+          e.role.toLowerCase() === name.toLowerCase()
+        );
+        if (employee) {
+          mentionedAgents.push(employee.agentType);
+        }
+      });
+    }
+
+    // Add optimistic CEO message to chat
     const now = new Date();
     const timeString = now.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
@@ -233,52 +283,19 @@ export function CEODashboard() {
       hour12: true 
     });
 
-    // Check if message mentions someone
-    const mentionMatch = inputValue.match(/@(\w+)/);
-    const mentionedName = mentionMatch ? mentionMatch[1] : undefined;
-    const mentionedEmployee = employees.find(e => 
-      e.name.toLowerCase().includes(mentionedName?.toLowerCase() || '')
-    );
-
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
+    const optimisticMessage: ChatMessage = {
+      id: `temp_${Date.now()}`,
       sender: 'You (CEO)',
       senderId: 'ceo',
-      text: inputValue,
+      text: messageText,
       time: timeString,
-      mentionedAgent: mentionedEmployee?.id,
-      isFromCEO: true
+      isFromCEO: true,
     };
 
-    setChatMessages(prev => [...prev, newMessage]);
-    setInputValue('');
+    setLocalChatMessages(prev => [...prev, optimisticMessage]);
 
-    // Simulate response from mentioned agent
-    if (mentionedEmployee) {
-      setTimeout(() => {
-        const responses = [
-          `Got it! I'll look into that right away.`,
-          `Thanks for reaching out. I'm on it!`,
-          `Understood. I'll update you on the progress.`,
-          `Perfect timing! I was just working on this.`,
-          `I'll prioritize this and get back to you soon.`
-        ];
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        
-        setChatMessages(prev => [...prev, {
-          id: (Date.now() + 1).toString(),
-          sender: mentionedEmployee.name.split(' ')[0],
-          senderId: mentionedEmployee.id,
-          text: randomResponse,
-          time: new Date().toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-          }),
-          isFromCEO: false
-        }]);
-      }, 1000 + Math.random() * 1500);
-    }
+    // Send message via API
+    await sendChatMessage(messageText, mentionedAgents);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -289,20 +306,15 @@ export function CEODashboard() {
   };
 
   const filteredEmployees = employees.filter(emp => 
-    emp.name.toLowerCase().includes(mentionFilter)
+    emp.name.toLowerCase().includes(mentionFilter) ||
+    emp.role.toLowerCase().includes(mentionFilter)
   );
 
-  const tasksByEmployee = employees.map(emp => ({
-    employee: emp,
-    tasks: ceoTasks.filter(t => t.assignedTo === emp.id)
-  }));
-
-  const stats = {
-    totalTasks: ceoTasks.length,
-    completed: ceoTasks.filter(t => t.status === 'completed').length,
-    inProgress: ceoTasks.filter(t => t.status === 'in-progress').length,
-    pending: ceoTasks.filter(t => t.status === 'pending').length,
-    avgProgress: Math.round(ceoTasks.reduce((acc, t) => acc + t.progress, 0) / ceoTasks.length)
+  const toggleAgentExpanded = (agentId: string) => {
+    setExpandedAgents(prev => ({
+      ...prev,
+      [agentId]: !prev[agentId]
+    }));
   };
 
   return (
@@ -333,22 +345,32 @@ export function CEODashboard() {
             </div>
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-3">
-                {mockHistory.map((item, index) => (
-                  <div
-                    key={index}
-                    className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <p className="text-xs text-muted-foreground mb-1">
-                      {item.date}
-                    </p>
-                    <p className="text-sm font-medium text-foreground">
-                      {item.action}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {item.details}
-                    </p>
+                {isLoadingActivity ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   </div>
-                ))}
+                ) : activities.length > 0 ? (
+                  activities.map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {new Date(item.timestamp).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {item.action}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {item.details}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-8">
+                    No activity history yet
+                  </p>
+                )}
               </div>
             </ScrollArea>
           </div>
@@ -466,7 +488,7 @@ export function CEODashboard() {
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-foreground">
-                          {stats.totalTasks}
+                          {stats.total_tasks || 0}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Total Tasks
@@ -483,7 +505,7 @@ export function CEODashboard() {
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-green-500">
-                          {stats.completed}
+                          {stats.completed_tasks || 0}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Completed
@@ -500,7 +522,7 @@ export function CEODashboard() {
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-blue-500">
-                          {stats.inProgress}
+                          {stats.in_progress_tasks || 0}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           In Progress
@@ -517,7 +539,7 @@ export function CEODashboard() {
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-orange-500">
-                          {stats.pending}
+                          {stats.pending_tasks || 0}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Pending
@@ -534,7 +556,7 @@ export function CEODashboard() {
                       </div>
                       <div>
                         <p className="text-2xl font-bold text-purple-500">
-                          {stats.avgProgress}%
+                          {stats.average_progress || 0}%
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Avg Progress
@@ -552,87 +574,115 @@ export function CEODashboard() {
                     <CardTitle>Tasks by Agent</CardTitle>
                     <Badge variant="secondary" className="gap-1">
                       <Users className="h-3 w-3" />
-                      {employees.length} Agents
+                      {tasksByEmployee.length} Agents
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {tasksByEmployee.map(({ employee, tasks }) => (
-                      <div key={employee.id} className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={employee.avatar} alt={employee.name} />
-                            <AvatarFallback>
-                              {employee.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <p className="font-medium text-sm text-foreground">
-                              {employee.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {employee.role} • {tasks.length} tasks
-                            </p>
+                    {tasksByEmployee.map((agentData) => {
+                      const employee = employees.find(e => e.agentType === agentData.agent_id);
+                      if (!employee) return null;
+
+                      return (
+                        <div key={agentData.agent_id} className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={employee.avatar} alt={employee.name} />
+                              <AvatarFallback>
+                                {employee.name[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <p className="font-medium text-sm text-foreground">
+                                {employee.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {employee.role} • {agentData.task_count} tasks
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setInputValue(`@${employee.role} `)}
+                            >
+                              <AtSign className="h-3 w-3 mr-1" />
+                              Message
+                            </Button>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setInputValue(`@${employee.name.split(' ')[0]} `)}
-                          >
-                            <AtSign className="h-3 w-3 mr-1" />
-                            Message
-                          </Button>
-                        </div>
-                        
-                        {tasks.length > 0 && (
-                          <div className="ml-11 space-y-2">
-                            {tasks.map((task) => (
-                              <div
-                                key={task.id}
-                                className={`p-3 rounded-lg border-l-4 ${getPriorityColor(task.priority)} bg-muted/30`}
-                              >
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex items-start gap-3 flex-1">
-                                    {getStatusIcon(task.status)}
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className="font-medium text-sm text-foreground mb-1">
-                                        {task.title}
-                                      </h4>
-                                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                                        {getStatusBadge(task.status)}
-                                        <Badge variant="outline" className="text-xs">
-                                          {task.priority}
-                                        </Badge>
-                                        <span className="text-xs text-muted-foreground">
-                                          Due: {task.dueDate}
-                                        </span>
+                          
+                          {agentData.tasks.length > 0 && (
+                            <div className="ml-11 space-y-2">
+                              {agentData.tasks
+                                .slice(0, expandedAgents[agentData.agent_id] ? undefined : 3)
+                                .map((task) => (
+                                  <div
+                                    key={task.id}
+                                    className={`p-3 rounded-lg border-l-4 ${getPriorityColor(task.priority)} bg-muted/30`}
+                                  >
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex items-start gap-3 flex-1">
+                                        {getStatusIcon(task.status)}
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-medium text-sm text-foreground mb-1">
+                                            {task.title}
+                                          </h4>
+                                          <div className="flex items-center gap-2 flex-wrap mb-2">
+                                            {getStatusBadge(task.status)}
+                                            <Badge variant="outline" className="text-xs">
+                                              {task.priority}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground">
+                                              Due: {new Date(task.due_date).toLocaleDateString()}
+                                            </span>
+                                          </div>
+                                          {/* Progress bar */}
+                                          <div className="w-full bg-muted rounded-full h-1.5">
+                                            <div 
+                                              className="bg-primary h-1.5 rounded-full transition-all"
+                                              style={{ width: `${task.progress}%` }}
+                                            />
+                                          </div>
+                                          <p className="text-xs text-muted-foreground mt-1">
+                                            {task.progress}% complete
+                                          </p>
+                                        </div>
                                       </div>
-                                      {/* Progress bar */}
-                                      <div className="w-full bg-muted rounded-full h-1.5">
-                                        <div 
-                                          className="bg-primary h-1.5 rounded-full transition-all"
-                                          style={{ width: `${task.progress}%` }}
-                                        />
-                                      </div>
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        {task.progress}% complete
-                                      </p>
                                     </div>
                                   </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {tasks.length === 0 && (
-                          <p className="ml-11 text-sm text-muted-foreground">
-                            No active tasks
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                                ))}
+                              
+                              {agentData.tasks.length > 3 && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full"
+                                  onClick={() => toggleAgentExpanded(agentData.agent_id)}
+                                >
+                                  {expandedAgents[agentData.agent_id] ? (
+                                    <>
+                                      <ChevronUp className="h-4 w-4 mr-2" />
+                                      Show Less
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronDown className="h-4 w-4 mr-2" />
+                                      View More ({agentData.tasks.length - 3} more)
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          
+                          {agentData.tasks.length === 0 && (
+                            <p className="ml-11 text-sm text-muted-foreground">
+                              No active tasks
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -657,7 +707,7 @@ export function CEODashboard() {
             {/* Messages area */}
             <ScrollArea className="flex-1 p-4" ref={chatScrollRef}>
               <div className="space-y-3">
-                {chatMessages.map((message) => (
+                {localChatMessages.map((message) => (
                   <div
                     key={message.id}
                     className={`flex flex-col ${message.isFromCEO ? 'items-end' : 'items-start'}`}
@@ -671,13 +721,27 @@ export function CEODashboard() {
                           : 'bg-muted text-foreground'
                       }`}
                     >
-                      <p className="text-sm">{message.text}</p>
+                      {message.isFromCEO || message.senderId === 'system' ? (
+                        <p className="text-sm">{message.text}</p>
+                      ) : (
+                        <div className="text-sm prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-p:leading-relaxed prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.text}
+                          </ReactMarkdown>
+                        </div>
+                      )}
                     </div>
                     <span className="text-[10px] text-muted-foreground mt-1 px-1">
                       {message.sender} • {message.time}
                     </span>
                   </div>
                 ))}
+                {isSendingMessage && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Sending message...</span>
+                  </div>
+                )}
               </div>
             </ScrollArea>
 
@@ -695,7 +759,7 @@ export function CEODashboard() {
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={emp.avatar} alt={emp.name} />
                           <AvatarFallback className="text-xs">
-                            {emp.name.split(' ').map(n => n[0]).join('')}
+                            {emp.name[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="text-left">
@@ -722,8 +786,12 @@ export function CEODashboard() {
                   placeholder="Type @ to mention an agent..."
                   className="flex-1 text-sm"
                 />
-                <Button size="icon" onClick={handleSendMessage} disabled={!inputValue.trim()}>
-                  <Send className="h-4 w-4" />
+                <Button size="icon" onClick={handleSendMessage} disabled={!inputValue.trim() || isSendingMessage}>
+                  {isSendingMessage ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>

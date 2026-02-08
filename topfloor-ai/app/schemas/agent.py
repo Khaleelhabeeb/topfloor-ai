@@ -3,7 +3,7 @@ Agent Schemas - Pydantic models for agent status and management
 """
 
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 import re
@@ -28,3 +28,32 @@ class AgentStatusResponse(BaseModel):
     updated_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
+
+
+class AgentInfo(BaseModel):
+    """Information about an agent"""
+    name: str
+    agent_type: str
+    description: str
+
+
+class AgentListResponse(BaseModel):
+    """Response for listing agents"""
+    agents: List[AgentInfo]
+    total: int
+
+
+class AgentExecutionRequest(BaseModel):
+    """Request to execute an agent"""
+    message: str = Field(..., description="User message to send to the agent", min_length=1)
+    agent_type: Optional[str] = Field(None, description="Specific agent type to use (defaults to orchestrator)")
+    context: Optional[Dict[str, Any]] = Field(None, description="Additional context for the agent")
+
+
+class AgentExecutionResponse(BaseModel):
+    """Response from agent execution"""
+    session_id: str
+    agent_name: str
+    response: str
+    metadata: Optional[Dict[str, Any]]
+    created_at: datetime

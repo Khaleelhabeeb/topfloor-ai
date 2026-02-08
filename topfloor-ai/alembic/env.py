@@ -7,7 +7,12 @@ from alembic import context
 
 # Import the Base and all models for autogenerate support
 from app.db.base import Base
-from app.models.user import User  # Import all models here
+from app.models.user import User
+from app.models.session import Session
+from app.models.task import Task
+from app.models.task_history import TaskHistory
+from app.models.chat_message import ChatMessage
+from app.models.agent_status import AgentStatus
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

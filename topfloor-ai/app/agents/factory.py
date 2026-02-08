@@ -10,8 +10,8 @@ from app.agents.base import BaseAgent
 from app.agents.orchestrator import OrchestratorAgent
 from app.agents.tech_lead import TeamLeadAgent
 from app.agents.researcher import ResearcherAgent
-from app.agents.engineer import EngineerAgent
-from app.agents.qa import DataAnalystAgent
+from app.agents.finance import FinanceAgent
+from app.agents.data_analyst import DataAnalystAgent
 
 
 class AgentFactory:
@@ -32,7 +32,7 @@ class AgentFactory:
         AgentType.ORCHESTRATOR: OrchestratorAgent,
         AgentType.TEAM_LEAD: TeamLeadAgent,
         AgentType.RESEARCHER: ResearcherAgent,
-        AgentType.DEVELOPER: EngineerAgent,
+        AgentType.FINANCE: FinanceAgent,
         AgentType.DATA_ANALYST: DataAnalystAgent,
     }
     
@@ -41,7 +41,9 @@ class AgentFactory:
         cls,
         agent_type: AgentType,
         user_context: Optional[Dict[str, Any]] = None,
-        sub_agents: Optional[List[LlmAgent]] = None
+        sub_agents: Optional[List[LlmAgent]] = None,
+        task_service: Optional[Any] = None,
+        agent_status_service: Optional[Any] = None
     ) -> LlmAgent:
         """
         Create a single agent by type.
@@ -50,6 +52,8 @@ class AgentFactory:
             agent_type: Type of agent to create
             user_context: Optional user-specific context (user_id, preferences, etc.)
             sub_agents: Optional list of sub-agents (for orchestrator)
+            task_service: Optional task service (for Team Lead)
+            agent_status_service: Optional agent status service (for Team Lead)
             
         Returns:
             Ready-to-run ADK LlmAgent instance
@@ -71,6 +75,14 @@ class AgentFactory:
             if not sub_agents:
                 raise ValueError("Orchestrator requires sub_agents parameter")
             agent_instance = agent_class(definition, sub_agents, user_context)
+        elif agent_type == AgentType.TEAM_LEAD:
+            # Team Lead needs services for task coordination
+            agent_instance = agent_class(
+                definition, 
+                user_context,
+                task_service=task_service,
+                agent_status_service=agent_status_service
+            )
         else:
             agent_instance = agent_class(definition, user_context)
         
@@ -80,7 +92,9 @@ class AgentFactory:
     @classmethod
     def create_agent_team(
         cls,
-        user_context: Optional[Dict[str, Any]] = None
+        user_context: Optional[Dict[str, Any]] = None,
+        task_service: Optional[Any] = None,
+        agent_status_service: Optional[Any] = None
     ) -> LlmAgent:
         """
         Create a complete agent team with orchestrator and all specialists.
@@ -88,21 +102,28 @@ class AgentFactory:
         
         Args:
             user_context: Optional user-specific context
+            task_service: Optional task service (for Team Lead)
+            agent_status_service: Optional agent status service (for Team Lead)
             
         Returns:
             Orchestrator agent with all sub-agents configured
         """
         # Create all specialist agents first
-        team_lead = cls.create_agent(AgentType.TEAM_LEAD, user_context)
+        team_lead = cls.create_agent(
+            AgentType.TEAM_LEAD, 
+            user_context,
+            task_service=task_service,
+            agent_status_service=agent_status_service
+        )
         researcher = cls.create_agent(AgentType.RESEARCHER, user_context)
-        developer = cls.create_agent(AgentType.DEVELOPER, user_context)
+        finance = cls.create_agent(AgentType.FINANCE, user_context)
         data_analyst = cls.create_agent(AgentType.DATA_ANALYST, user_context)
         
         # Create orchestrator with all specialists as sub-agents
         orchestrator = cls.create_agent(
             AgentType.ORCHESTRATOR,
             user_context,
-            sub_agents=[team_lead, researcher, developer, data_analyst]
+            sub_agents=[team_lead, researcher, finance, data_analyst]
         )
         
         return orchestrator

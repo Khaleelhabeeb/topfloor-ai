@@ -29,11 +29,6 @@ def upgrade() -> None:
     # Add composite indexes for TaskHistory table
     op.create_index('idx_task_history_task_created', 'task_history', ['task_id', 'created_at'], unique=False)
     
-    # Add composite indexes for Artifacts table
-    op.create_index('idx_artifact_user_agent', 'artifacts', ['user_id', 'agent_type'], unique=False)
-    op.create_index('idx_artifact_user_filetype', 'artifacts', ['user_id', 'file_type'], unique=False)
-    op.create_index('idx_artifact_created_at', 'artifacts', ['created_at'], unique=False)
-    
     # Add composite indexes for AgentStatus table
     op.create_index('idx_agent_status_user', 'agent_status', ['user_id'], unique=False)
     op.create_index('idx_agent_status_status', 'agent_status', ['status'], unique=False)
@@ -54,11 +49,6 @@ def downgrade() -> None:
     # AgentStatus indexes
     op.drop_index('idx_agent_status_status', table_name='agent_status')
     op.drop_index('idx_agent_status_user', table_name='agent_status')
-    
-    # Artifacts indexes
-    op.drop_index('idx_artifact_created_at', table_name='artifacts')
-    op.drop_index('idx_artifact_user_filetype', table_name='artifacts')
-    op.drop_index('idx_artifact_user_agent', table_name='artifacts')
     
     # TaskHistory indexes
     op.drop_index('idx_task_history_task_created', table_name='task_history')

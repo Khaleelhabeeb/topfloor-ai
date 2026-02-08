@@ -18,11 +18,6 @@ from app.schemas.chat_message import (
     ChatMessageResponse,
     ChatMessageListResponse,
 )
-from app.schemas.artifact import (
-    ArtifactCreate,
-    ArtifactResponse,
-    ArtifactListResponse,
-)
 from app.schemas.agent import (
     AgentStatusEnum,
     AgentStatusResponse,
@@ -47,10 +42,6 @@ __all__ = [
     "ChatMessageCreate",
     "ChatMessageResponse",
     "ChatMessageListResponse",
-    # Artifact schemas
-    "ArtifactCreate",
-    "ArtifactResponse",
-    "ArtifactListResponse",
     # Agent schemas
     "AgentStatusEnum",
     "AgentStatusResponse",

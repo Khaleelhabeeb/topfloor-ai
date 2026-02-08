@@ -4,7 +4,7 @@ Task Schemas - Pydantic models for task management
 
 from pydantic import BaseModel, Field, ConfigDict, field_validator, model_validator
 from typing import Optional, Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import re
 
@@ -41,6 +41,8 @@ class TaskCreate(BaseModel):
     task_type: TaskType = Field(TaskType.BACKGROUND, description="Task type (chat or background)")
     priority: TaskPriority = Field(TaskPriority.MEDIUM, description="Task priority")
     input_data: Optional[Dict[str, Any]] = Field(None, description="Input data for the task")
+    progress: int = Field(0, ge=0, le=100, description="Task progress percentage")
+    due_date: Optional[datetime] = Field(None, description="Task due date (ISO 8601)")
     
     @field_validator('title', 'description')
     @classmethod
@@ -91,6 +93,20 @@ class TaskCreate(BaseModel):
                 raise ValueError("Input data exceeds maximum size of 100KB")
         return v
 
+    @field_validator('due_date')
+    @classmethod
+    def validate_due_date_future(cls, v: Optional[datetime]) -> Optional[datetime]:
+        if v is None:
+            return v
+
+        now = datetime.now(timezone.utc)
+        value = v
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        if value <= now:
+            raise ValueError("due_date must be in the future")
+        return v
+
 
 class TaskUpdate(BaseModel):
     """Request to update a task"""
@@ -100,6 +116,8 @@ class TaskUpdate(BaseModel):
     priority: Optional[TaskPriority] = Field(None, description="Updated task priority")
     result_data: Optional[Dict[str, Any]] = Field(None, description="Task result data")
     error_message: Optional[str] = Field(None, max_length=2000, description="Error message if task failed")
+    progress: Optional[int] = Field(None, ge=0, le=100, description="Updated progress percentage")
+    due_date: Optional[datetime] = Field(None, description="Updated due date (ISO 8601)")
     
     @field_validator('title', 'description', 'error_message')
     @classmethod
@@ -134,11 +152,25 @@ class TaskUpdate(BaseModel):
             if len(data_str) > 500000:  # 500KB limit for results
                 raise ValueError("Result data exceeds maximum size of 500KB")
         return v
+
+    @field_validator('due_date')
+    @classmethod
+    def validate_due_date_future(cls, v: Optional[datetime]) -> Optional[datetime]:
+        if v is None:
+            return v
+
+        now = datetime.now(timezone.utc)
+        value = v
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        if value <= now:
+            raise ValueError("due_date must be in the future")
+        return v
     
     @model_validator(mode='after')
     def validate_at_least_one_field(self):
         """Ensure at least one field is being updated"""
-        if all(getattr(self, field) is None for field in ['title', 'description', 'status', 'priority', 'result_data', 'error_message']):
+        if all(getattr(self, field) is None for field in ['title', 'description', 'status', 'priority', 'result_data', 'error_message', 'progress', 'due_date']):
             raise ValueError("At least one field must be provided for update")
         return self
 
@@ -147,13 +179,14 @@ class TaskResponse(BaseModel):
     """Response for a task"""
     id: int
     task_id: str
-    user_id: int
     title: str
     description: Optional[str]
     agent_type: str
-    task_type: TaskType
+    task_type: str
     status: TaskStatus
-    priority: TaskPriority
+    priority: str
+    progress: int
+    due_date: Optional[datetime]
     input_data: Optional[Dict[str, Any]]
     result_data: Optional[Dict[str, Any]]
     error_message: Optional[str]

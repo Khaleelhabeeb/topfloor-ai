@@ -102,7 +102,7 @@ export function Minimap() {
       {insideDoor && (
         <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
           <span className="text-[7px] text-primary font-medium bg-primary/10 px-1 rounded">
-            In: {employees.find(e => e.id === insideDoor)?.name.split(' ')[0]}'s Office
+            In: {employees.find(e => e.id === insideDoor)?.name}'s Office
           </span>
         </div>
       )}

@@ -87,6 +87,10 @@ class Task(Base):
         default=TaskPriority.MEDIUM,
         index=True
     )
+
+    # Task progress tracking
+    progress = Column(Integer, nullable=False, default=0)
+    due_date = Column(DateTime(timezone=True), nullable=True)
     
     # Task status
     status = Column(
