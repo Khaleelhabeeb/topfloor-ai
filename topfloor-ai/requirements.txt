@@ -1,3 +1,4 @@
+supervisor==4.2.5
 # Web Framework
 fastapi
 uvicorn[standard]
