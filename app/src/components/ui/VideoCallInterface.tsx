@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChatPanel } from '@/components/ui/ChatPanel';
 import { useGameState } from '@/hooks/useGameState';
+import { useVoiceChat } from '@/hooks/useVoiceChat';
 import { agentsApi } from '@/lib/agents';
 import { toast } from 'sonner';
 import { 
@@ -16,7 +17,8 @@ import {
   MoreVertical,
   Users,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Radio
 } from 'lucide-react';
 
 interface VideoCallInterfaceProps {
@@ -24,11 +26,12 @@ interface VideoCallInterfaceProps {
 }
 
 export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProps) {
-  const { currentEmployee, exitVideoCall } = useGameState();
-  const [isMuted, setIsMuted] = useState(false);
+  const { currentEmployee } = useGameState();
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isLoadingPrompt, setIsLoadingPrompt] = useState(true);
   const [systemPrompt, setSystemPrompt] = useState<string | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState('Initializing...');
+  const [callStarted, setCallStarted] = useState(false); // Track if call has started
 
   // Fetch system prompt when component mounts
   useEffect(() => {
@@ -40,11 +43,13 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
         console.log(`Fetching prompt builder for ${currentEmployee.agentType}...`);
         const response = await agentsApi.getPromptBuilder(currentEmployee.agentType);
         console.log('Prompt builder response:', response);
+        console.log('System prompt fetched, length:', response.text.length);
         setSystemPrompt(response.text);
-        toast.success('Voice chat ready');
+        toast.success('Voice chat initialized');
       } catch (error) {
         console.error('Failed to fetch system prompt:', error);
         toast.error('Failed to initialize voice chat');
+        setSystemPrompt('You are a helpful assistant.'); // Fallback
       } finally {
         setIsLoadingPrompt(false);
       }
@@ -53,31 +58,64 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
     fetchSystemPrompt();
   }, [currentEmployee]);
 
+  // Initialize voice chat ONLY after prompt is loaded AND call is started
+  const voiceChat = useVoiceChat({
+    agentType: currentEmployee?.agentType || 'team_lead',
+    systemPrompt: systemPrompt || 'You are a helpful assistant.',
+    onStatusChange: setVoiceStatus,
+    enabled: !isLoadingPrompt && systemPrompt !== null && callStarted, // Only when ready AND started
+  });
+
+  // Only initialize voice chat after prompt is loaded and call started
+  const isVoiceChatReady = !isLoadingPrompt && systemPrompt && voiceChat.isConnected && callStarted;
+
   // Handle escape key to go back
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        voiceChat.disconnect();
         onBackToInterface();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onBackToInterface]);
+  }, [onBackToInterface, voiceChat]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      voiceChat.disconnect();
+    };
+  }, []);
+
+  const handleEndCall = () => {
+    voiceChat.disconnect();
+    setCallStarted(false);
+    toast.info('Call ended');
+  };
+
+  const handleStartCall = () => {
+    setCallStarted(true);
+    toast.success('Starting call...');
+  };
 
   if (!currentEmployee) return null;
 
-  // Show loading overlay while fetching system prompt
-  if (isLoadingPrompt) {
+  // Show loading overlay while fetching system prompt or connecting
+  if (isLoadingPrompt || voiceChat.isConnecting) {
     return (
       <div className="fixed inset-0 bg-background z-50 flex items-center justify-center animate-fade-in">
         <div className="text-center space-y-4">
           <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
           <div>
             <p className="text-lg font-semibold text-foreground">
-              Initializing Voice Chat
+              {isLoadingPrompt ? 'Initializing Voice Chat' : 'Connecting to Gemini Live'}
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Preparing conversation with {currentEmployee.name}...
+              {isLoadingPrompt 
+                ? `Preparing conversation with ${currentEmployee.name}...`
+                : 'Establishing voice connection...'
+              }
             </p>
           </div>
           <Button
@@ -114,10 +152,13 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
             </div>
             <div>
               <h2 className="font-semibold text-sm text-foreground">
-                Live Call with {currentEmployee.name}
+                {callStarted ? 'Live Call with' : 'Ready to call'} {currentEmployee.name}
               </h2>
               <p className="text-xs text-muted-foreground">
                 {currentEmployee.department}
+                {callStarted && isVoiceChatReady && (
+                  <span className="ml-2 text-green-500">● Connected</span>
+                )}
               </p>
             </div>
           </div>
@@ -155,18 +196,35 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
             {/* Avatar centered */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex flex-col items-center">
-                <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
-                  <AvatarImage src={currentEmployee.avatar} alt={currentEmployee.name} />
-                  <AvatarFallback className="text-3xl">
-                    {currentEmployee.name[0]}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
+                    <AvatarImage src={currentEmployee.avatar} alt={currentEmployee.name} />
+                    <AvatarFallback className="text-3xl">
+                      {currentEmployee.name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Voice activity indicator */}
+                  {voiceChat.isRecording && (
+                    <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                      <Radio className="h-5 w-5 text-white" />
+                    </div>
+                  )}
+                  {voiceStatus === 'Speaking...' && (
+                    <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                      <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+                    </div>
+                  )}
+                </div>
                 <div className="mt-4 text-center">
                   <h3 className="font-semibold text-lg text-foreground">
                     {currentEmployee.name}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     {currentEmployee.role}
+                  </p>
+                  {/* Voice status */}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {voiceStatus}
                   </p>
                 </div>
               </div>
@@ -197,50 +255,95 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
 
         {/* Controls bar */}
         <div className="h-20 bg-card border-t border-border flex items-center justify-center gap-3">
-          <Button
-            variant={isMuted ? "destructive" : "secondary"}
-            size="lg"
-            className="rounded-full w-12 h-12"
-            onClick={() => setIsMuted(!isMuted)}
-            disabled={!systemPrompt}
-          >
-            {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          </Button>
-          
-          <Button
-            variant={!isVideoOn ? "destructive" : "secondary"}
-            size="lg"
-            className="rounded-full w-12 h-12"
-            onClick={() => setIsVideoOn(!isVideoOn)}
-            disabled={!systemPrompt}
-          >
-            {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-          </Button>
-          
-          <Button
-            variant="secondary"
-            size="lg"
-            className="rounded-full w-12 h-12"
-            disabled={!systemPrompt}
-          >
-            <Monitor className="h-5 w-5" />
-          </Button>
-          
-          <Button
-            variant="destructive"
-            size="lg"
-            className="rounded-full px-6 h-12"
-            onClick={exitVideoCall}
-          >
-            <PhoneOff className="h-5 w-5 mr-2" />
-            End Call
-          </Button>
-          
-          {systemPrompt && (
-            <div className="ml-4 flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span>Voice Ready</span>
-            </div>
+          {!callStarted ? (
+            // Before call starts - show Start Call button
+            <>
+              <Button
+                variant="default"
+                size="lg"
+                className="rounded-full px-8 h-12 bg-green-600 hover:bg-green-700"
+                onClick={handleStartCall}
+                disabled={!systemPrompt || isLoadingPrompt}
+              >
+                <Radio className="h-5 w-5 mr-2" />
+                Start Call
+              </Button>
+              
+              {systemPrompt && !isLoadingPrompt && (
+                <div className="ml-4 flex items-center gap-2 text-xs">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-muted-foreground">Ready to start</span>
+                </div>
+              )}
+              
+              {(!systemPrompt || isLoadingPrompt) && (
+                <div className="ml-4 flex items-center gap-2 text-xs">
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Preparing...</span>
+                </div>
+              )}
+            </>
+          ) : (
+            // During call - show call controls
+            <>
+              <Button
+                variant={voiceChat.isRecording ? "destructive" : "secondary"}
+                size="lg"
+                className="rounded-full w-12 h-12 relative"
+                onClick={voiceChat.toggleRecording}
+                disabled={!isVoiceChatReady}
+              >
+                {voiceChat.isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                {voiceChat.isRecording && (
+                  <span className="absolute inset-0 rounded-full border-2 border-red-500 animate-ping" />
+                )}
+              </Button>
+              
+              <Button
+                variant={!isVideoOn ? "destructive" : "secondary"}
+                size="lg"
+                className="rounded-full w-12 h-12"
+                onClick={() => setIsVideoOn(!isVideoOn)}
+                disabled={!isVoiceChatReady}
+              >
+                {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              </Button>
+              
+              <Button
+                variant="secondary"
+                size="lg"
+                className="rounded-full w-12 h-12"
+                disabled={!isVoiceChatReady}
+              >
+                <Monitor className="h-5 w-5" />
+              </Button>
+              
+              <Button
+                variant="destructive"
+                size="lg"
+                className="rounded-full px-6 h-12"
+                onClick={handleEndCall}
+              >
+                <PhoneOff className="h-5 w-5 mr-2" />
+                End Call
+              </Button>
+              
+              {isVoiceChatReady && (
+                <div className="ml-4 flex items-center gap-2 text-xs">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-muted-foreground">
+                    {voiceChat.isRecording ? 'Recording' : 'Voice Ready'}
+                  </span>
+                </div>
+              )}
+              
+              {!isVoiceChatReady && callStarted && (
+                <div className="ml-4 flex items-center gap-2 text-xs">
+                  <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Connecting...</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
