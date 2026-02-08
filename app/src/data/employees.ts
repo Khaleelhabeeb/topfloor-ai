@@ -19,7 +19,7 @@ export const employeeVisuals: Record<string, Omit<Employee, 'agentType'>> = {
     name: 'Sarah',
     role: 'Researcher',
     department: 'Research',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face',
+    avatar: '/sarah.png',
     officePosition: { x: -8, z: -4 },
     initialMessages: [
       { sender: 'Sarah', text: 'Hi! I can help you with web research and information synthesis. What would you like me to research?', time: '9:00 AM' },
@@ -30,7 +30,7 @@ export const employeeVisuals: Record<string, Omit<Employee, 'agentType'>> = {
     name: 'James',
     role: 'Data Analyst',
     department: 'Analytics',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
+    avatar: '/james.png',
     officePosition: { x: -8, z: 4 },
     initialMessages: [
       { sender: 'James', text: 'Hey! I specialize in data visualization and analysis. Let me know if you need any insights.', time: '9:15 AM' },
@@ -41,7 +41,7 @@ export const employeeVisuals: Record<string, Omit<Employee, 'agentType'>> = {
     name: 'Alex',
     role: 'Team Lead',
     department: 'Management',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face',
+    avatar: '/alex.png',
     officePosition: { x: 8, z: -4 },
     initialMessages: [
       { sender: 'Alex', text: 'Hey! I coordinate tasks and manage team workload. Need help with task assignments?', time: '10:00 AM' },
@@ -52,7 +52,7 @@ export const employeeVisuals: Record<string, Omit<Employee, 'agentType'>> = {
     name: 'Peter',
     role: 'Finance',
     department: 'Finance',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
+    avatar: '/peter.png',
     officePosition: { x: 8, z: 4 },
     initialMessages: [
       { sender: 'Peter', text: 'Welcome! I can help with financial analysis and market research. What insights do you need?', time: '11:00 AM' },
