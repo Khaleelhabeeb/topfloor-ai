@@ -7,6 +7,7 @@ from app.api.tasks import router as tasks_router
 from app.api.ws import router as ws_router
 from app.api.memory import router as memory_router
 from app.api.ceo import router as ceo_router
+from app.api.tools import router as tools_router
 import logging
 import os
 from dotenv import load_dotenv
@@ -97,6 +98,10 @@ app = FastAPI(
             "description": "CEO dashboard endpoints"
         },
         {
+            "name": "Tools",
+            "description": "Utility endpoints"
+        },
+        {
             "name": "Health",
             "description": "System health and status checks"
         }
@@ -135,6 +140,7 @@ app.include_router(tasks_router, prefix="/api/v1")
 app.include_router(ws_router, prefix="/api/v1")
 app.include_router(memory_router, prefix="/api/v1")
 app.include_router(ceo_router, prefix="/api/v1")
+app.include_router(tools_router, prefix="/api/v1")
 
 
 @app.get("/", tags=["Health"])
