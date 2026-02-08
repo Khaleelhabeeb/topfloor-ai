@@ -89,6 +89,14 @@ export interface ChatHistoryResponse {
   total_pages: number;
 }
 
+export interface PromptBuilderRequest {
+  agent_type: AgentType;
+}
+
+export interface PromptBuilderResponse {
+  text: string;
+}
+
 // Agents API calls
 export const agentsApi = {
   // List all agents
@@ -123,5 +131,10 @@ export const agentsApi = {
   // Get agent status
   getAgentStatus: async (agentType: AgentType): Promise<AgentStatus> => {
     return api.get<AgentStatus>(`/agents/status/${agentType}`);
+  },
+
+  // Get prompt builder for voice chat
+  getPromptBuilder: async (agentType: AgentType): Promise<PromptBuilderResponse> => {
+    return api.post<PromptBuilderResponse>('/tools/prompt-builder', { agent_type: agentType });
   },
 };

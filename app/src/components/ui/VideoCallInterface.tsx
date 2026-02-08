@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChatPanel } from '@/components/ui/ChatPanel';
 import { useGameState } from '@/hooks/useGameState';
+import { agentsApi } from '@/lib/agents';
+import { toast } from 'sonner';
 import { 
   PhoneOff, 
   Mic, 
@@ -13,7 +15,8 @@ import {
   Monitor, 
   MoreVertical,
   Users,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 
 interface VideoCallInterfaceProps {
@@ -24,6 +27,31 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
   const { currentEmployee, exitVideoCall } = useGameState();
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(true);
+  const [systemPrompt, setSystemPrompt] = useState<string | null>(null);
+
+  // Fetch system prompt when component mounts
+  useEffect(() => {
+    const fetchSystemPrompt = async () => {
+      if (!currentEmployee) return;
+      
+      setIsLoadingPrompt(true);
+      try {
+        console.log(`Fetching prompt builder for ${currentEmployee.agentType}...`);
+        const response = await agentsApi.getPromptBuilder(currentEmployee.agentType);
+        console.log('Prompt builder response:', response);
+        setSystemPrompt(response.text);
+        toast.success('Voice chat ready');
+      } catch (error) {
+        console.error('Failed to fetch system prompt:', error);
+        toast.error('Failed to initialize voice chat');
+      } finally {
+        setIsLoadingPrompt(false);
+      }
+    };
+
+    fetchSystemPrompt();
+  }, [currentEmployee]);
 
   // Handle escape key to go back
   useEffect(() => {
@@ -37,6 +65,34 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
   }, [onBackToInterface]);
 
   if (!currentEmployee) return null;
+
+  // Show loading overlay while fetching system prompt
+  if (isLoadingPrompt) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center animate-fade-in">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <div>
+            <p className="text-lg font-semibold text-foreground">
+              Initializing Voice Chat
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Preparing conversation with {currentEmployee.name}...
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBackToInterface}
+            className="mt-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-background z-50 flex animate-fade-in">
@@ -146,6 +202,7 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
             size="lg"
             className="rounded-full w-12 h-12"
             onClick={() => setIsMuted(!isMuted)}
+            disabled={!systemPrompt}
           >
             {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
           </Button>
@@ -155,6 +212,7 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
             size="lg"
             className="rounded-full w-12 h-12"
             onClick={() => setIsVideoOn(!isVideoOn)}
+            disabled={!systemPrompt}
           >
             {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
           </Button>
@@ -163,6 +221,7 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
             variant="secondary"
             size="lg"
             className="rounded-full w-12 h-12"
+            disabled={!systemPrompt}
           >
             <Monitor className="h-5 w-5" />
           </Button>
@@ -176,6 +235,13 @@ export function VideoCallInterface({ onBackToInterface }: VideoCallInterfaceProp
             <PhoneOff className="h-5 w-5 mr-2" />
             End Call
           </Button>
+          
+          {systemPrompt && (
+            <div className="ml-4 flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span>Voice Ready</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -63,8 +63,18 @@ async def build_prompt(
 
 	tasks_section = "None" if not task_lines else "\n".join(task_lines)
 
+	voice_prefix = (
+		"VOICE MODE:\n"
+		"- Speak naturally and concisely; keep responses to 1-3 sentences.\n"
+		"- Avoid markdown, code blocks, and long lists unless asked.\n"
+		"- If something is ambiguous, ask one short clarifying question.\n"
+		"- Read numbers naturally; avoid symbols or abbreviations without context.\n"
+		"- If you plan to create a task, say so clearly before you proceed.\n\n"
+	)
+
 	text = (
-		"SYSTEM PROMPT:\n"
+		voice_prefix
+		+ "SYSTEM PROMPT:\n"
 		f"{agent_def.system_prompt}\n\n"
 		"CURRENT TASKS:\n"
 		f"{tasks_section}"
