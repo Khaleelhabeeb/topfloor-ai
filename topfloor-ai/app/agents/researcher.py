@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 from urllib.parse import urlparse
 from app.tools.research_tools import web_search as web_search_tool
+from google.adk.tools import FunctionTool
 
 from app.agents.base import BaseAgent
 from app.agents.registry import AgentDefinition
