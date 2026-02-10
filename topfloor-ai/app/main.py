@@ -185,11 +185,7 @@ def health():
     Useful for monitoring and load balancer health checks.
     """
     return {
-        "status": "healthy",
-        "version": "1.0.0",
-        "api_key_configured": bool(os.getenv("GOOGLE_API_KEY")),
-        "database_url_configured": bool(os.getenv("DATABASE_URL")),
-        "chroma_api_key_configured": bool(os.getenv("CHROMA_API_KEY")),
+        "status": "ok",
     }
 
 
