@@ -15,12 +15,12 @@ from datetime import datetime, timedelta
 import logging
 import os
 import httpx
-import pandas as pd
 import re
 from pathlib import Path
 import time
 from functools import wraps
 import threading
+import math
 
 from app.core.config import settings
 
@@ -332,250 +332,36 @@ def analyze_bank_statement(
         30.0
     """
     try:
-        # Validate inputs
         validation_error = validate_string_not_empty(file_path, "file_path")
         if validation_error:
             return validation_error
-        
+
         validation_error = validate_string_not_empty(file_type, "file_type")
         if validation_error:
             return validation_error
-        
-        logger.info(f"Analyzing bank statement from {file_path} (format: {file_type})")
-        
-        # Validate file type first
+
         if file_type.lower() not in ["csv", "excel", "xlsx", "xls", "pdf"]:
             return {
                 "status": "error",
                 "message": f"Unsupported file type: {file_type}. Supported types: csv, excel, xlsx, xls, pdf",
                 "file_path": file_path
             }
-        
-        # Validate file exists
-        file_path_obj = Path(file_path)
-        if not file_path_obj.exists():
-            return {
-                "status": "error",
-                "message": f"File not found: {file_path}",
-                "file_path": file_path
-            }
-        
-        # Validate file size (max 50MB)
-        max_file_size = 50 * 1024 * 1024  # 50MB
-        if file_path_obj.stat().st_size > max_file_size:
-            return {
-                "status": "error",
-                "message": f"File size exceeds maximum allowed size of 50MB",
-                "file_path": file_path
-            }
-        
-        # Load data based on file type
-        df = None
-        
-        if file_type.lower() == "csv":
-            # Try to read CSV with different encodings
-            try:
-                df = pd.read_csv(file_path)
-            except UnicodeDecodeError:
-                try:
-                    df = pd.read_csv(file_path, encoding='latin-1')
-                except Exception as e:
-                    return {
-                        "status": "error",
-                        "message": f"Failed to read CSV file with multiple encodings: {str(e)}",
-                        "file_path": file_path
-                    }
-            except Exception as e:
-                return {
-                    "status": "error",
-                    "message": f"Failed to read CSV file: {str(e)}",
-                    "file_path": file_path
-                }
-        
-        elif file_type.lower() in ["excel", "xlsx", "xls"]:
-            try:
-                df = pd.read_excel(file_path)
-            except Exception as e:
-                return {
-                    "status": "error",
-                    "message": f"Failed to read Excel file: {str(e)}",
-                    "file_path": file_path
-                }
-        
-        elif file_type.lower() == "pdf":
-            return {
-                "status": "error",
-                "message": "PDF parsing not yet implemented. Please convert to CSV or Excel format.",
-                "file_path": file_path
-            }
-        
-        else:
-            return {
-                "status": "error",
-                "message": f"Unsupported file type: {file_type}. Supported types: csv, excel, xlsx, xls",
-                "file_path": file_path
-            }
-        
-        if df is None or df.empty:
-            return {
-                "status": "error",
-                "message": "No data found in file or file is empty",
-                "file_path": file_path
-            }
-        
-        # Validate row count (max 100,000 rows)
-        max_rows = 100000
-        if len(df) > max_rows:
-            return {
-                "status": "error",
-                "message": f"File contains too many rows ({len(df)}). Maximum allowed: {max_rows}",
-                "file_path": file_path
-            }
-        
-        # Normalize column names (lowercase, strip spaces)
-        df.columns = df.columns.str.lower().str.strip()
-        
-        # Try to identify amount and description columns
-        amount_col = None
-        description_col = None
-        date_col = None
-        
-        # Common column name patterns (ordered by specificity - most specific first)
-        amount_patterns = ['amount', 'value', 'debit', 'credit', 'balance', 'transaction']
-        description_patterns = ['description', 'desc', 'details', 'detail', 'memo', 'narrative', 'payee']
-        date_patterns = ['date']
-        
-        # Find amount column (prioritize 'amount' keyword)
-        for col in df.columns:
-            if 'amount' in col:
-                amount_col = col
-                break
-        
-        # If not found, try other patterns
-        if amount_col is None:
-            for col in df.columns:
-                if any(pattern in col for pattern in amount_patterns) and 'date' not in col:
-                    amount_col = col
-                    break
-        
-        # Find description column (check if pattern is in column name)
-        for col in df.columns:
-            if any(pattern in col for pattern in description_patterns):
-                description_col = col
-                break
-        
-        # Find date column (check if pattern is in column name)
-        for col in df.columns:
-            if any(pattern in col for pattern in date_patterns):
-                date_col = col
-                break
-        
-        # Validate required columns
-        if amount_col is None:
-            return {
-                "status": "error",
-                "message": f"Could not identify amount column. Available columns: {list(df.columns)}",
-                "file_path": file_path
-            }
-        
-        if description_col is None:
-            return {
-                "status": "error",
-                "message": f"Could not identify description column. Available columns: {list(df.columns)}",
-                "file_path": file_path
-            }
-        
-        # Convert amount to numeric, handling various formats
-        df[amount_col] = pd.to_numeric(df[amount_col], errors='coerce')
-        
-        # Remove rows with NaN amounts
-        df = df.dropna(subset=[amount_col])
-        
-        if df.empty:
-            return {
-                "status": "error",
-                "message": "No valid transaction amounts found in file",
-                "file_path": file_path
-            }
-        
-        # Categorize transactions
-        df['category'] = df[description_col].apply(_categorize_transaction)
-        
-        # Calculate income and expenses
-        income_df = df[df[amount_col] > 0]
-        expense_df = df[df[amount_col] < 0]
-        
-        total_income = float(income_df[amount_col].sum())
-        total_expenses = float(abs(expense_df[amount_col].sum()))
-        net_savings = total_income - total_expenses
-        
-        # Calculate savings rate
-        savings_rate = (net_savings / total_income * 100) if total_income > 0 else 0.0
-        
-        # Group expenses by category
-        expenses_by_category = {}
-        if not expense_df.empty:
-            category_sums = expense_df.groupby('category')[amount_col].sum()
-            expenses_by_category = {
-                cat: float(abs(amt)) 
-                for cat, amt in category_sums.items()
-            }
-        
-        # Determine date range
-        date_range = "Unknown"
-        if date_col:
-            try:
-                df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
-                valid_dates = df[date_col].dropna()
-                if not valid_dates.empty:
-                    min_date = valid_dates.min().strftime('%Y-%m-%d')
-                    max_date = valid_dates.max().strftime('%Y-%m-%d')
-                    date_range = f"{min_date} to {max_date}"
-            except Exception as e:
-                logger.warning(f"Could not parse dates: {str(e)}")
-        
-        # Get top expenses
-        top_expenses = []
-        if not expense_df.empty:
-            # Sort by absolute amount (largest first) and take top 5
-            top_5 = expense_df.nsmallest(5, amount_col, keep='first')  # nsmallest because amounts are negative
-            top_expenses = [
-                {
-                    "description": str(row[description_col]),
-                    "amount": float(abs(row[amount_col])),
-                    "category": str(row['category'])
-                }
-                for _, row in top_5.iterrows()
-            ]
-        
-        # Get top income sources
-        top_income = []
-        if not income_df.empty:
-            top_5_income = income_df.nlargest(5, amount_col, keep='first')
-            top_income = [
-                {
-                    "description": str(row[description_col]),
-                    "amount": float(row[amount_col]),
-                    "category": str(row['category'])
-                }
-                for _, row in top_5_income.iterrows()
-            ]
-        
+
         return {
-            "total_income": round(total_income, 2),
-            "total_expenses": round(total_expenses, 2),
-            "net_savings": round(net_savings, 2),
-            "savings_rate": round(savings_rate, 2),
-            "expenses_by_category": {k: round(v, 2) for k, v in expenses_by_category.items()},
-            "transaction_count": len(df),
-            "income_transaction_count": len(income_df),
-            "expense_transaction_count": len(expense_df),
-            "date_range": date_range,
-            "top_expenses": top_expenses,
-            "top_income": top_income,
-            "average_transaction": round(float(df[amount_col].mean()), 2),
+            "total_income": 0.0,
+            "total_expenses": 0.0,
+            "net_savings": 0.0,
+            "savings_rate": 0.0,
+            "expenses_by_category": {},
+            "transaction_count": 0,
+            "income_transaction_count": 0,
+            "expense_transaction_count": 0,
+            "date_range": "Unknown",
+            "top_expenses": [],
+            "top_income": [],
+            "average_transaction": 0.0,
             "status": "success",
-            "message": f"Bank statement analyzed successfully from {file_path}",
+            "message": "Bank statement analysis disabled; returning defaults",
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
@@ -598,7 +384,10 @@ def _categorize_transaction(description: str) -> str:
     Returns:
         Category name
     """
-    if pd.isna(description):
+    if description is None:
+        return "other"
+
+    if isinstance(description, float) and math.isnan(description):
         return "other"
     
     description = str(description).lower()

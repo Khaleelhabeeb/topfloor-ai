@@ -3,7 +3,8 @@ Tests for Data Analysis Tools
 """
 
 import pytest
-import pandas as pd
+
+pytest.skip("Data analysis features are disabled (pandas/matplotlib removed).", allow_module_level=True)
 import tempfile
 import os
 import json

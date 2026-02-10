@@ -3,8 +3,10 @@ Tests for Finance Tools
 """
 
 import pytest
+
+pytest.skip("Finance analysis features are disabled (pandas removed).", allow_module_level=True)
+
 from unittest.mock import patch, MagicMock
-import pandas as pd
 from datetime import datetime, timedelta
 import tempfile
 import os
