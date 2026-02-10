@@ -177,6 +177,7 @@ def root():
 
 
 @app.get("/health", tags=["Health"])
+@app.head("/health")
 def health():
     """
     Health check endpoint
